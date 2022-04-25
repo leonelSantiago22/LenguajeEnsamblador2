@@ -1,0 +1,40 @@
+.MODEL SMALL
+.STACK
+.DATA
+	var1 db ?
+.CODE
+main:	mov ax,@data
+		mov ds,ax
+		mov ah,01h
+		int 21h
+		mov bh,al
+		sub bh,30h
+		mov bl,01h
+		mov var1,bh
+		sub var1,01h
+		mov ah,02h
+		call reto
+		int 21h	
+cic1: 	mov cl,bl
+		mov ch,0
+		lea dx,msg1
+		push cx
+		mov cl,var1
+		mov ch,0
+		call spc
+		mov ah,02h
+espc:	int 21h
+		loop espc
+		pop cx
+		dec var1
+cic2:	mov ah,09h
+		int 21h
+		inc bl
+		loop cic2
+		cmp bl,bh
+		call reto
+		mov ah,02h
+		int 21h
+		jle cic1
+		.exit 0
+end

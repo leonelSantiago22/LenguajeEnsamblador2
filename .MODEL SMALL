@@ -1,0 +1,15 @@
+.MODEL SMALL 
+.STACK
+.DATA
+.CODE 
+main:	mov ax,@data
+		int 21
+		call leer1		;El dato esta en al 
+		mov bl,al   	;Movemos el dato donde lo podamos guardas
+		call leer1		;Volvemos a tener otro dato en al
+		
+
+leer1: 	mov ah,01h  	;leemos el numero
+		int 21h
+		ret 
+end 
