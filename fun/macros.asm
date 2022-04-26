@@ -1,10 +1,32 @@
-.model small
+.MODEL SMALL 
 .386
-extrn reto:near
-extrn reto:near
-.stack
-.data
-.code
+org 100h
+.STACK 
+.DATA 
+.CODE 
+print2 macro x, y, attrib, sdat
+LOCAL   s_dcl, skip_dcl, s_dcl_end
+    pusha
+    mov dx, cs
+    mov es, dx                              ;utiliza el extra segment
+    mov ah, 13h
+    mov al, 1
+    mov bh, 0
+    mov bl, attrib
+    mov cx, offset s_dcl_end - offset s_dcl
+    mov dl, x
+    mov dh, y
+    mov bp, offset s_dcl
+    int 10h
+    
+    mov dx,ds
+    mov es,dx
+    popa
+    jmp skip_dcl
+    s_dcl DB sdat
+    s_dcl_end DB 0
+    skip_dcl:
+endm
 print	macro cadena
 local dbcad,dbfin,salta
 	pusha			;respalda todo
@@ -21,12 +43,3 @@ local dbcad,dbfin,salta
 salta:	pop ds			;etiqueta local de salto, recuperar segmento de datos
 	popa			;recuperar registros
 endm
-
-main:	mov ax,@data
-		mov ds,ax		;data segmente/segmento de datos
-	
-		print "Hola Mundo"
-		call reto
-		print "como estaS?"
-		.exit 0
-end
