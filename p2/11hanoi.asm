@@ -1,5 +1,6 @@
 ;Uso de macro en torres de hanoi para la reduccion de codigo, o el uso de un tipo de polimorfismo  
 .MODEL SMALL
+include ..\fun\macros.asm
 extrn desdec:near
 extrn leedec:near
 extrn reto:near
@@ -35,9 +36,11 @@ hanoi:	push bp 			;Movemos el base pointer la base de la pila
 		hano ax [bp+8]	[bp+4]	[bp+6]
 
 		;moves un disco de 0 a D 
+		print 'movemos disco de '
 		mov dx,[bp+8]	;origen
 		mov ah,02
 		int 21h
+		print ' a '
 		mov dx,[bp+4]	;destino
 		mov ah,02
 		int 21h
