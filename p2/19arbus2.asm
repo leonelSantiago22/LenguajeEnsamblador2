@@ -6,12 +6,15 @@ extrn spc:near
 extrn reto:near
 .STACK
 .DATA 
-arreglo db "BBFBFBBBF"
+arreglo db "BBFBFBBBFB"
 .code
 main:       mov ax,@data
             mov ds,ax
             mov es,ax
-            mov al,'F' ;Carácter que se busca.
+            print "indica letra "
+            mov ah,01h
+            int 21h
+            ;mov al,'A' ;Carácter que se busca.
             mov cx,10 ;Número de veces a buscar.
             mov bx,0
             cld ;Búsqueda ascendente.
@@ -34,5 +37,10 @@ noen:       call reto
             cmp bx,0
             jg fin
             print "no encontrado"
-fin:        .exit 0
+            jmp fini
+fin:        call reto
+            print "En toral fueron :  "
+            mov dx,bx
+            call desdec
+fini:            .exit 0
 end 
