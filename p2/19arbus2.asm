@@ -6,7 +6,7 @@ extrn spc:near
 extrn reto:near
 .STACK
 .DATA 
-arreglo db "BBFBFBBBB"
+arreglo db "BBFBFBBBF"
 .code
 main:       mov ax,@data
             mov ds,ax
@@ -26,7 +26,7 @@ ini:        repne scasb ;Repetir mientras CX>0 y el dato
             mov dx,10
             sub dx,cx
             call desdec
-            inc bx
+            inc bx                  ;usamos a bx como contador 
             cmp cx,0
             jg ini
             jmp fin
