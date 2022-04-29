@@ -6,7 +6,7 @@ extrn des4:near
 extrn desdec:near
 .STACK
 .DATA
-    cadena db "Hola Mundocc$"       ;inicializamos la cadena
+    cadena db "hola bb como estas?$"       ;inicializamos la cadena
 .CODE
 conteo  macro  direc,tam            ;definicion del macro
 local retorno,salida                ;Declarams como locales las variables para que no causen problemas
