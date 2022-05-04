@@ -52,7 +52,7 @@ leecad: mov bx,dx ;vamos a usar bx como apuntador
         mov [bx-2],cl       ;ponemos donde apunta dx el tamano de la cadena
         mov ah,0Ah                  ;ya esta en dx el offset del arreglo 
         int 21h 
-        ;call reto
+        call reto
         mov al, [bx-1]          ;aqui pone realemente el tamano que leyo
         ret
 end
