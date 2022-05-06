@@ -1,0 +1,15 @@
+Se movio de : O a A
+Se movio de : O a D
+Se movio de : A a D
+Se movio de : O a A
+Se movio de : D a O
+Se movio de : D a A
+Se movio de : O a A
+Se movio de : O a D
+Se movio de : A a D
+Se movio de : A a O
+Se movio de : D a O
+Se movio de : A a D
+Se movio de : O a A
+Se movio de : O a D
+Se movio de : A a D
