@@ -1,27 +1,27 @@
-;Programa que calcula el factorial de un numero pequeno
-
-.MODEL SMALL
-extrn desdec:near
+;Programa que calcula factorial de un número decimal, cuyo resultado máximo sea de 4 dígitos decimales. Las operaciones deberán realizarse en hexadecimal.
+.model small
 extrn leedec:near
+extrn desdec:near
 extrn reto:near
-.STACK
-.DATA
-.CODE
-main:	mov ax,@data
-		mov ds,ax
-		mov es,ax
+.stack
+.data
+.code
+main:   mov ax,@data
+        mov ds,ax
+        mov es,ax
+        
+        call leedec
+        push ax         ;mandamos a la pila lo que tenemos a leer
+        call sumrec
+        add sp,02       ;Restauramos la pila 
+        mov dx,dx 
+        call desdec     ;Desplegamos el resultado
+        mov dx,ax
+        call desdec
+        call reto
+        .exit 0
 
-		call leedec		;Dato en el registro de AX, es un estandar
-		push ax			;Lo respaldamos en la pila 
-		call sumrec 	;Mandamos a llamar la sumatoria recursiva
-		add sp,02h		;Restauramos la pila inmediatamente despues 
-		mov dx,ax 		;Movemos el dato a dx para desplefar por que que desdec recibe el parametro en dx 
-		call desdec		;Mandamos a llamar la funcion que imprime los numeros 
-		call reto
-		.exit 0
-
-		;Funcion que permite el calculo de la sumatoria o factorial del numero ademas la funcion es recursiva
-
+;suma recursiva para el factorial las operaciones estan dadas por hexadecimal
 sumrec:	push bp 	;Movemos el base pointer la base de la pila 
 		mov bp,sp 	;Creo el nuevo base pointer 
 		mov ax,[bp+4]		;buscamos el dato en la pila ;parametro (el ultimo y el unico)
@@ -42,11 +42,3 @@ sr_s:	;Dejando en AX el resultado
 		pop bp		;Salida del base pointer 
 		ret
 end
-;crecimiento de la pila 
-; ------
-;|		|
-;|------|
-;|		|
-;|------|
-;|		|
-; ------
