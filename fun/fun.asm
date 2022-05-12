@@ -173,5 +173,19 @@ leecad: mov bx,dx ;vamos a usar bx como apuntador
         call reto
         mov al, [bx-1]          ;aqui pone realemente el tamano que leyo
         ret
-
+;Despliega cadena
+despc:  push bp
+        mov bp,sp
+        mov ah,02h
+        cld
+        mov si,[bp+4]
+dcl:    lodsb           ;Carga en AL, incrementa SI
+        cmp al,0        ;Si ya llegó al 0, salir.
+        je dcs
+        mov dl,al
+        int 21h
+        jmp dcl
+dcs:    mov sp,bp
+        pop bp
+        ret
 end
