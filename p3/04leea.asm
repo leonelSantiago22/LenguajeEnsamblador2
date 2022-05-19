@@ -43,7 +43,6 @@ cic:    mov ah,3Fh ;Código para leer archivo
         
         jmp cic
         call reto
-       
         jc error
         
 error:  mov dx,ax

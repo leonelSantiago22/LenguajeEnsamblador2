@@ -8,7 +8,7 @@ extrn spc:near
 extrn desdec:near
 .stack
 .data
-    patron  db "*.asm*",0   ;solo con direecion asm
+    patron  db "*.bin*",0   ;solo con direecion asm
     DTA     db 21 dup(0)    ;Directory Table Alocation
     attr    db 0
     time    dw 0
