@@ -23,7 +23,7 @@ main:   mov ax,@data
         mov es,ax
         mov var,0
     ;establecer posición de DTA
-        mov ah,1Ah
+        mov ah,1Ah  
         mov dx,offset DTA
         int 21h
     ;Preparar lectura de directorio y mostra primer archivo
