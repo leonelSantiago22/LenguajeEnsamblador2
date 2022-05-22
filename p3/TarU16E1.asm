@@ -33,11 +33,7 @@ main:   mov ax,@data
         int 21h
         jc sale
         inc var
-        mov dx,sizeh
-        call desdec
-        mov dx,sizel
-        call desdec
-        call spc
+        
     ;Desplegar nombre (también se podrían desplegar otros datos)
         push offset fname 
         call despc
@@ -48,11 +44,6 @@ nf:     mov ah,4Fh
         int 21h
         jc sale
         inc var
-        mov dx,sizeh
-        call desdec
-        mov dx,sizel
-        call desdec
-        call spc
         push offset fname
         call despc
         add sp,02
@@ -78,5 +69,4 @@ dcl:    lodsb           ;Carga en AL, incrementa SI
 dcs:    mov sp,bp
         pop bp
         ret
-
 end
