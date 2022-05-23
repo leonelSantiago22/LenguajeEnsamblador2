@@ -1,12 +1,14 @@
 ;animacion
 .model small
-.386
+.486
 .stack
 .data
 color	db	0Fh
 offx	dw	0h	;Offset para x y y, para desplazar figura a voluntad, se usa con macro pixelo
 offy	dw	0h
 equis	dw	?
+dirx 	dw 	00h
+diry	dw	0h
 ye	dw	?
 incx	dw	?
 incy	dw	?
@@ -67,7 +69,7 @@ main:	mov ax,@data
 	mov al,12h
 	int 10h
 	
-	mov cx,100
+	mov cx,0ffffh
  ciclo:	push cx
  	
 	;ROMBO
@@ -100,16 +102,41 @@ main:	mov ax,@data
         mov dl,0FFh        ;Si pongo 0ffh es para leer peroo si acsii es para escribir
         int 21h
         jz sigue                ;si no hubo teclazo brincate a sigue
+	;derecha
+		cmp al,64h
+		jne t2
+		mov dirx,1
+		jmp sigue 
+	;izquirda
+t2:		cmp al,61h
+		jne t3
+		mov dirx,-2
+		jmp sigue
+	;abajo
+t3:		cmp al,73h
+		jne t4
+		mov diry,1
+		jmp sigue
+	;arriba
+t4:		cmp al,77h
+		jne t5
+		mov diry,-2
+		jmp sigue
         ;hubo teclaso dato en al
-        cmp al,1Bh
-        je fin
-sigue:  
-	
-	inc offx
-	inc offy
- 	pop cx
- 	loop ciclo
- 
+t5:        cmp al,1Bh
+        jne sigue
+		add sp,2
+		jmp fin
+sigue: 	inc offx
+		inc offy
+		mov si,dirx
+		add offx,si
+		mov si,diry
+		add offy,si
+ 		pop cx
+		dec cx
+ 		cmp cx,0
+		jne ciclo
  	
 	;esperar usuario
 	;mov ah,00h
