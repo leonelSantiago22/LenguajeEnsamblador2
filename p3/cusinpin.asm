@@ -4,7 +4,7 @@
 .stack
 .data
 .code
-pintarx macro x,y,color,cant
+pintarx2 macro x,y,color,cant
 local cic 
     
         mov cx,x ;Coordenada X.
@@ -18,7 +18,7 @@ cic:    mov dx,y ;Coordenada Y.
         jle cic
         
 endm
-pintary macro x,y,color,cant
+pintary2 macro x,y,color,cant
 local cic 
     
         mov cx,x ;Coordenada X.
@@ -40,24 +40,36 @@ main: ;Obtener configuración de pantalla y guardarla en la pila .
         mov ax,4f02h
         mov bx,105h ;Código del modo.
         int 10h
-        mov cx,0150 ;codenadas x 
+        mov cx,0350 ;codenadas x 
         mov dx,0250 ;cordenadas y
         mov al,0Fh
         ;desplegar algo
         ;x y color tam
         ;mov si,0100
         mov si,0100
-cic:    pintarx cx dx al 0400
+cic:    pintarx2 cx dx al 0000
         inc dx 
         inc si
         cmp si,0250
         jle cic
         mov si,0100
-cic2:   pintary cx dx al 0400
+cic2:   pintary2 cx dx al 0000
         inc dx 
         inc si
         cmp si,0250
         jle cic2
+        mov si,0100
+cic3:   pintary2 cx dx al 0000
+        dec dx 
+        inc si
+        cmp si,0250
+        jle cic3
+        mov si,0100
+cic4:    pintarx2 cx dx al 0000
+        dec dx 
+        inc si
+        cmp si,0250
+        jle cic4
         ;esperar usuario
         mov ah,00h
         int 16h
