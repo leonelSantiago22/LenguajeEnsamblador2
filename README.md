@@ -17,3 +17,5 @@ Sin embargo, al utilizar bloques de código provenientes de diferentes archivos,
 separado el ensamblado y el ligado. El ligado es un proceso realizado por el linker que integra varios
 bloques de código utilizando etiquetas para hacer referencia a sus puntos de acceso a código y a datos.
 De hecho, prácticamente todos los compiladores modernos utilizan ligadores para realizar esa función.
+Donde se puede encontrar tasm y el dosbox:
+https://www.utm.mx/~zarza/zDesk1.php?04_Ensamblador
