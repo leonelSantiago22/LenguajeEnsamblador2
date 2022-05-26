@@ -12,10 +12,11 @@ extrn spc:near
 .code 
 main:   mov ax,@data
         mov ds,ax 
-        
+                
         call leerelnombredelarchivo
         call crear_archivo
-        ;call cerrar_archivo
+        call cerrar_archivo
+        
         .exit 0
 
 ;En caso de error para saber si el error es facil
@@ -30,15 +31,9 @@ leerelnombredelarchivo:
         mov bl,al
         mov bh,0
         mov nombre_archivo[bx],24h
-        mov dx,offset nombre_archivo
-        mov cl,bl
-        add cl,2
-        call desarr             ;despliega arreglo
-        call reto
-        mov dx, offset nombre_archivo
-        mov ah,09h
-        int 21h
+        
 ret
+;Desplegar el contenido del arreglo en hexadecimal
 desarr: cld
         mov si,offset pre_cad    ;le agrea 3 posiciones al arrglo
         mov ch,0h
@@ -60,6 +55,7 @@ crear_archivo:
         mov fid,ax
 ret 
 
+;Funcion para cerral el archivo
 cerrar_archivo: 
         mov ah,3Eh ;Código para cerrar archivo
         mov bx,fid ;Identificador.
@@ -67,6 +63,11 @@ cerrar_archivo:
         jc error ;Saltar en caso de error
 
 ret
+
+imprimir_archivo:
+
+        ret
+
 leecad: mov bx,dx ;vamos a usar bx como apuntador
         sub dx,2
         mov [bx-2],cl       ;ponemos donde apunta dx el tamano de la cadena
