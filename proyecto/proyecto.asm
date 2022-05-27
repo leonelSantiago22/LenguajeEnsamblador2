@@ -15,7 +15,11 @@ main:   mov ax,@data
         mov ds,ax 
                 
         call leerelnombredelarchivo
+        ;call crear_archivo
         call imprimir_archivo
+        ;call cerrar_archivo
+        call editar_archivo
+        ;call borrar_archivo
         call cerrar_archivo
         
         .exit 0
@@ -67,35 +71,65 @@ ret
 
 imprimir_archivo:
         mov ah,3Dh ;Código para abrir archivo
-		mov al,0 ;Modo lectura
-		mov dx,offset nombre_archivo ;Dirección del nombre
-		int 21h ;Abrir, devuelve ident
-		jc error ;En caso de error, saltar
-		mov fid,ax ;guardar identificador
-		;Leer el archivo
-		;fread( &contenido, srtlen( contenido ), 1, fid );
-		;dentro de un ciclo
-        cic_im:	mov ah,3Fh ;Código para leer archivo
-		mov bx,fid ;Identificador
-		mov cx,10h ;Tamaño deseado
-		mov dx,offset bufer ;Dirección búfer
-		int 21h ;Leer archivo
-		jc error ;Si hubo error, procesar
-		;salir si ya no hay mas
-		
-		;Colocar símbolo $ al final de cadena leída
-		cmp ax,0
-		je sal_im
-		mov bx,ax;nos dice cuanto leyo
-		add bx,offset bufer
-		mov byte ptr[bx],'$'
-		;Desplegar cadena leída
-		mov dx,offset bufer
-		mov ah,09h
-		int 21h
+	mov al,0 ;Modo lectura
+	mov dx,offset nombre_archivo ;Dirección del nombre
+	int 21h ;Abrir, devuelve ident
+	jc error ;En caso de error, saltar
+	mov fid,ax ;guardar identificador
+	;Leer el archivo
+	;fread( &contenido, srtlen( contenido ), 1, fid );
+	;dentro de un ciclo
+                cic_im:	mov ah,3Fh ;Código para leer archivo
+                        mov bx,fid ;Identificador
+                        mov cx,10h ;Tamaño deseado
+                        mov dx,offset bufer ;Dirección búfer
+                        int 21h ;Leer archivo
+                        jc error ;Si hubo error, procesar
+                        ;salir si ya no hay mas
+                        
+                        ;Colocar símbolo $ al final de cadena leída
+                        cmp ax,0
+                        je sal_im
+                        mov bx,ax;nos dice cuanto leyo
+                        add bx,offset bufer
+                        mov byte ptr[bx],'$'
+                        ;Desplegar cadena leída
+                        mov dx,offset bufer
+                        mov ah,09h
+                        int 21h
 		
 		jmp cic_im
 sal_im:
+        ret
+borrar_archivo:
+        mov ah,41h
+        mov dx, offset nombre_archivo
+        int 21h
+        jc error
+ret
+editar_archivo:
+        push ax 
+        push bx  
+        push di
+        push es 
+        push dx
+        push si
+        mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO
+        mov dx, offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO
+        mov al,2                    ;MODO SOLO ESCRITURA
+        int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR
+        mov bx,ax
+        mov ah,40h                  ;SERVICIO PARA ESCRIBIR MENSAJE
+        ;mov cx,12000d               ;SETEO TAMANIO DE MENSAJE
+        mov dx,offset bufer   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR
+        int 21h                     ;SE GUARDA EL MENSAJE
+        jc error
+        pop si
+        pop dx       
+        pop es 
+        pop di      
+        pop bx
+        pop ax
         ret
 
 leecad: mov bx,dx ;vamos a usar bx como apuntador
