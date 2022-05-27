@@ -7,14 +7,15 @@ extrn spc:near
 .stack
 .data
     pre_cad db 2 dup(?)
-    nombre_archivo db 20 dup(00h)  
+    nombre_archivo db 20 dup(00h) 
+    bufer 	 db 0fffh dup(?);el buffer es un espacio de memoria para poner temporalmente los datos  
     fid dw ?            ;Identidificador del archivo
 .code 
 main:   mov ax,@data
         mov ds,ax 
                 
         call leerelnombredelarchivo
-        call crear_archivo
+        call imprimir_archivo
         call cerrar_archivo
         
         .exit 0
@@ -22,7 +23,7 @@ main:   mov ax,@data
 ;En caso de error para saber si el error es facil
 error:  mov dx,ax
         call des4
-        .exit 1
+        ;.exit 1
 
 leerelnombredelarchivo:
         mov dx,offset nombre_archivo
@@ -65,7 +66,36 @@ cerrar_archivo:
 ret
 
 imprimir_archivo:
-
+        mov ah,3Dh ;Código para abrir archivo
+		mov al,0 ;Modo lectura
+		mov dx,offset nombre_archivo ;Dirección del nombre
+		int 21h ;Abrir, devuelve ident
+		jc error ;En caso de error, saltar
+		mov fid,ax ;guardar identificador
+		;Leer el archivo
+		;fread( &contenido, srtlen( contenido ), 1, fid );
+		;dentro de un ciclo
+        cic_im:	mov ah,3Fh ;Código para leer archivo
+		mov bx,fid ;Identificador
+		mov cx,10h ;Tamaño deseado
+		mov dx,offset bufer ;Dirección búfer
+		int 21h ;Leer archivo
+		jc error ;Si hubo error, procesar
+		;salir si ya no hay mas
+		
+		;Colocar símbolo $ al final de cadena leída
+		cmp ax,0
+		je sal_im
+		mov bx,ax;nos dice cuanto leyo
+		add bx,offset bufer
+		mov byte ptr[bx],'$'
+		;Desplegar cadena leída
+		mov dx,offset bufer
+		mov ah,09h
+		int 21h
+		
+		jmp cic_im
+sal_im:
         ret
 
 leecad: mov bx,dx ;vamos a usar bx como apuntador
