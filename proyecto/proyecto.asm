@@ -1,5 +1,5 @@
 .model small
-.386
+.486
 extrn des4:near
 extrn reto:near
 extrn des2:near
@@ -9,6 +9,7 @@ extrn spc:near
     pre_cad db 2 dup(?)
     nombre_archivo db 20 dup(00h) 
     bufer 	 db 0fffh dup(?);el buffer es un espacio de memoria para poner temporalmente los datos  
+    bufer2 db "Hola buenas"
     fid dw ?            ;Identidificador del archivo
 .code 
 main:   mov ax,@data
@@ -17,7 +18,7 @@ main:   mov ax,@data
         call leerelnombredelarchivo
         ;call crear_archivo
         call imprimir_archivo
-        ;call cerrar_archivo
+        call cerrar_archivo
         call editar_archivo
         ;call borrar_archivo
         call cerrar_archivo
@@ -121,8 +122,8 @@ editar_archivo:
         mov bx,ax
         mov ah,40h                  ;SERVICIO PARA ESCRIBIR MENSAJE
         ;mov cx,12000d               ;SETEO TAMANIO DE MENSAJE
-        mov dx,offset bufer   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR
-        int 21h                     ;SE GUARDA EL MENSAJE
+        mov dx,offset bufer2   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR
+        int 21h                     ;SE GUARDA EL Mcd ENSAJE
         jc error
         pop si
         pop dx       
@@ -130,7 +131,7 @@ editar_archivo:
         pop di      
         pop bx
         pop ax
-        ret
+ret
 
 leecad: mov bx,dx ;vamos a usar bx como apuntador
         sub dx,2
