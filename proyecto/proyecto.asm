@@ -18,20 +18,23 @@ extrn spc:near
 main:   mov ax,@data
         mov ds,ax 
                 
-        ;call leerelnombredelarchivo
-        call insertar_archivo
+        call leerelnombredelarchivo
+        ;call insertar_archivo
         ;call crear_archivo
         ;call imprimir_archivo
         ;call cerrar_archivo
-        ;call editar_archivo
+        call editar_archivo
         ;call borrar_archivo
-        ;call cerrar_archivo
+         call cerrar_archivo
         
         .exit 0
 
 ;En caso de error para saber si el error es facil
 error:  call reto
         mov dx,ax
+        mov dx,offset nombre_archivo
+        mov ah,09h
+        int 21h
         call des4
         ;.exit 1
 
@@ -121,14 +124,24 @@ editar_archivo:
         push es 
         push dx
         push si
+        mov si,0
+pedir2: mov ah,01h
+        mov bufer[si],al                ;obtenemos donde se encuentra la posicion
+                                  ;Incrementamos las posiciones que agregamos
+        int 21h
+        inc si
+        cmp al,1bh                      ;comparamos si es diferente de esc
+        ;ja pedir                        ;SEgumimos pidiendo
+        jne pedir2
+        call reto
         mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO
         mov dx, offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO
         mov al,2                    ;MODO SOLO ESCRITURA
         int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR
         mov bx,ax
         mov ah,40h                  ;SERVICIO PARA ESCRIBIR MENSAJE
-        ;mov cx,12000d               ;SETEO TAMANIO DE MENSAJE
-        mov dx,offset vec   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR
+        mov cx,si               ;SETEO TAMANIO DE MENSAJE
+        mov dx,offset bufer   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR
         int 21h                     ;SE GUARDA EL Mcd ENSAJE
         jc error
         pop si
@@ -143,27 +156,40 @@ insertar_archivo:
         ;mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO                      ;SE ABRE EL FICHERO PARA TRABAJAR    
         mov si,0
 pedir:  mov ah,01h
-        mov vec[si],al                ;obtenemos donde se encuentra la posicion
-        inc si                          ;Incrementamos las posiciones que agregamos
+        mov bufer[si],al                ;obtenemos donde se encuentra la posicion
+                                  ;Incrementamos las posiciones que agregamos
         int 21h
+        inc si
         cmp al,1bh                      ;comparamos si es diferente de esc
-        ja pedir                        ;SEgumimos pidiendo
-        jb pedir
+        ;ja pedir                        ;SEgumimos pidiendo
+        jne pedir
         call reto
         print "estas seguro que quieres hacer estos cambios? S/N"
         mov ah,01h
         int 21h
-        cmp al,53h
+        cmp al,6eh
         je cancelar
         call reto
         print "Ingresa el nombre del archivo:"
         call leerelnombredelarchivo
         call crear_archivo
-        call cerrar_archivo
-        
+        mov ah,3dh
+        mov al,1h  
+        mov dx,offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO                  ;MODO SOLO ESCRITURA
+        int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR
+        jc error
+        mov bx,ax
+        mov cx,si               ;SETEO TAMANIO DE MENSAJE
+        mov dx,offset bufer   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR 
+        mov ah,40h                  ;SERVICIO PARA ESCRIBIR MENSAJE
+        int 21h                     ;SE GUARDA EL Mcd ENSAJE
+        cmp cx,ax 
+        jne salir_insertar
+        call crear_archivo
+
 salir_insertar:
         ret
-cancelar: jmp main
+cancelar:.exit 0
 leecad: mov bx,dx ;vamos a usar bx como apuntador
         sub dx,2
         mov [bx-2],cl       ;ponemos donde apunta dx el tamano de la cadena
