@@ -155,6 +155,7 @@ pedir:  mov ah,01h
         int 21h
         cmp al,53h
         je cancelar
+        call reto
         print "Ingresa el nombre del archivo:"
         call leerelnombredelarchivo
         mov dx,offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO
