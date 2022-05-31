@@ -18,7 +18,7 @@ extrn spc:near
 main:   mov ax,@data
         mov ds,ax 
                 
-        call leerelnombredelarchivo
+        ;call leerelnombredelarchivo
         call insertar_archivo
         ;call crear_archivo
         ;call imprimir_archivo
@@ -30,7 +30,8 @@ main:   mov ax,@data
         .exit 0
 
 ;En caso de error para saber si el error es facil
-error:  mov dx,ax
+error:  call reto
+        mov dx,ax
         call des4
         ;.exit 1
 
@@ -139,39 +140,32 @@ editar_archivo:
 ret
 
 insertar_archivo:
-        ;mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO
-        mov dx, offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO
-        mov al,2                        ;MODO SOLO ESCRITURA
-        int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR    
+        ;mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO                      ;SE ABRE EL FICHERO PARA TRABAJAR    
         mov si,0
 pedir:  mov ah,01h
-        mov vec[si],al                ;obtenemos donde se encuentra la posicion
+        mov bufer[si],al                ;obtenemos donde se encuentra la posicion
         inc si                          ;Incrementamos las posiciones que agregamos
+        int 21h
         cmp al,1bh                      ;comparamos si es diferente de esc
-        jne pedir                        ;SEgumimos pidiendo
-        ;jb pedir
+        ja pedir                        ;SEgumimos pidiendo
+        jb pedir
         ;call reto
         print "estas seguro que quieres hacer estos cambios? S/N"
         mov ah,01h
         int 21h
         cmp al,53h
-        je cancelar 
-        push si ;guardamos las posiciones donde se quedo
-        mov si,3
-        pop si 
-        mov ah,3dh 
-        mov al,01h
-        mov dx, offset nombre_archivo
-        int 21h
-        jc salir_insertar 
-        mov bx,ax 
-        mov cx,si 
-        mov dx, offset vec
-        mov ah,40h
-        int 21h
-        cmp cx,ax 
-        jne salir_insertar
-        call cerrar_archivo
+        je cancelar
+        print "Ingresa el nombre del archivo:"
+        call leerelnombredelarchivo
+        mov dx,offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO
+        mov al,2                    ;MODO SOLO ESCRITURA
+        int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR
+        mov bx,ax
+        mov ah,40h                  ;SERVICIO PARA ESCRIBIR MENSAJE
+        ;mov cx,12000d               ;SETEO TAMANIO DE MENSAJE
+        mov dx,offset bufer   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR
+        int 21h                     ;SE GUARDA EL Mcd ENSAJE
+        jc error
 
 salir_insertar:
         ret
