@@ -1,5 +1,6 @@
 .model small
 .486
+include ..\fun\macros.asm
 extrn des4:near
 extrn reto:near
 extrn des2:near
@@ -8,20 +9,23 @@ extrn spc:near
 .data
     pre_cad db 2 dup(?)
     nombre_archivo db 20 dup(00h) 
-    bufer 	 db 0fffh dup(?);el buffer es un espacio de memoria para poner temporalmente los datos  
+    bufer 	 db 0fffh dup('$');el buffer es un espacio de memoria para poner temporalmente los datos  
     bufer2 db "Hola buenas"
     fid dw ?            ;Identidificador del archivo
+    espacio dw ?
+    vec db 50 dup('$')
 .code 
 main:   mov ax,@data
         mov ds,ax 
                 
         call leerelnombredelarchivo
+        call insertar_archivo
         ;call crear_archivo
-        call imprimir_archivo
-        call cerrar_archivo
-        call editar_archivo
+        ;call imprimir_archivo
+        ;call cerrar_archivo
+        ;call editar_archivo
         ;call borrar_archivo
-        call cerrar_archivo
+        ;call cerrar_archivo
         
         .exit 0
 
@@ -94,6 +98,7 @@ imprimir_archivo:
                         mov bx,ax;nos dice cuanto leyo
                         add bx,offset bufer
                         mov byte ptr[bx],'$'
+                        mov espacio,bx  ;conocer cuantos espacios se imprimieron
                         ;Desplegar cadena leída
                         mov dx,offset bufer
                         mov ah,09h
@@ -115,7 +120,7 @@ editar_archivo:
         push es 
         push dx
         push si
-        mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO
+        ;mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO
         mov dx, offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO
         mov al,2                    ;MODO SOLO ESCRITURA
         int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR
@@ -133,6 +138,44 @@ editar_archivo:
         pop ax
 ret
 
+insertar_archivo:
+        ;mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO
+        mov dx, offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO
+        mov al,2                        ;MODO SOLO ESCRITURA
+        int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR    
+        mov si,0
+pedir:  mov ah,01h
+        mov vec[si],al                ;obtenemos donde se encuentra la posicion
+        inc si                          ;Incrementamos las posiciones que agregamos
+        cmp al,1bh                      ;comparamos si es diferente de esc
+        jne pedir                        ;SEgumimos pidiendo
+        ;jb pedir
+        ;call reto
+        print "estas seguro que quieres hacer estos cambios? S/N"
+        mov ah,01h
+        int 21h
+        cmp al,53h
+        je cancelar 
+        push si ;guardamos las posiciones donde se quedo
+        mov si,3
+        pop si 
+        mov ah,3dh 
+        mov al,01h
+        mov dx, offset nombre_archivo
+        int 21h
+        jc salir_insertar 
+        mov bx,ax 
+        mov cx,si 
+        mov dx, offset vec
+        mov ah,40h
+        int 21h
+        cmp cx,ax 
+        jne salir_insertar
+        call cerrar_archivo
+
+salir_insertar:
+        ret
+cancelar: jmp main
 leecad: mov bx,dx ;vamos a usar bx como apuntador
         sub dx,2
         mov [bx-2],cl       ;ponemos donde apunta dx el tamano de la cadena
