@@ -121,14 +121,14 @@ editar_archivo:
         push es 
         push dx
         push si
-        ;mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO
+        mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO
         mov dx, offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO
         mov al,2                    ;MODO SOLO ESCRITURA
         int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR
         mov bx,ax
         mov ah,40h                  ;SERVICIO PARA ESCRIBIR MENSAJE
         ;mov cx,12000d               ;SETEO TAMANIO DE MENSAJE
-        mov dx,offset bufer2   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR
+        mov dx,offset vec   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR
         int 21h                     ;SE GUARDA EL Mcd ENSAJE
         jc error
         pop si
@@ -143,13 +143,13 @@ insertar_archivo:
         ;mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO                      ;SE ABRE EL FICHERO PARA TRABAJAR    
         mov si,0
 pedir:  mov ah,01h
-        mov bufer[si],al                ;obtenemos donde se encuentra la posicion
+        mov vec[si],al                ;obtenemos donde se encuentra la posicion
         inc si                          ;Incrementamos las posiciones que agregamos
         int 21h
         cmp al,1bh                      ;comparamos si es diferente de esc
         ja pedir                        ;SEgumimos pidiendo
         jb pedir
-        ;call reto
+        call reto
         print "estas seguro que quieres hacer estos cambios? S/N"
         mov ah,01h
         int 21h
@@ -158,16 +158,9 @@ pedir:  mov ah,01h
         call reto
         print "Ingresa el nombre del archivo:"
         call leerelnombredelarchivo
-        mov dx,offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO
-        mov al,2                    ;MODO SOLO ESCRITURA
-        int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR
-        mov bx,ax
-        mov ah,40h                  ;SERVICIO PARA ESCRIBIR MENSAJE
-        ;mov cx,12000d               ;SETEO TAMANIO DE MENSAJE
-        mov dx,offset bufer   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR
-        int 21h                     ;SE GUARDA EL Mcd ENSAJE
-        jc error
-
+        call crear_archivo
+        call cerrar_archivo
+        
 salir_insertar:
         ret
 cancelar: jmp main
