@@ -2,6 +2,7 @@
 .model small
 .386
 .387
+    extrn spc:near
     extrn des2:near
     extrn reto:near
     extrn desdec:near
@@ -10,10 +11,10 @@
     extrn des1:near
 .stack
 .data
-    DatoFlo dd 30.95 ;Flotante de 32 bits.
-    entero dd ?
-    multi dd 10
-    resta dd 0.5
+    DatoFlo dd 13.99 ;Flotante de 32 bits.
+    entero  dd ?
+    diez   dd 10
+    medio   dd 0.5
 .code
 main:   mov ax,@data
         mov ds,ax
@@ -23,13 +24,12 @@ main:   mov ax,@data
         finit
         ;dato en la pila 
         fld DatoFlo
-        fld st(0)   ;metemos una copia del numero
-        fild resta
+        fld ST(0)   ;metemos una copia del numero
+        fld medio
         fsub
-        ;extrar la parte entera 
         fistp entero
+        ;extrar la parte entera 
         ;desplegar
-        
         fwait
         mov bx,offset entero
         mov dx,[bx]
@@ -40,22 +40,25 @@ main:   mov ax,@data
 
         fild entero
         fsub
-        
         ;reptir 4 veces
         mov cx,4
-ciclo:  
-        fild multi
+
+ciclo:  fild diez
         fmul 
-        fist entero
+        fld ST(0)
+        fld medio
+        fsub
+        fistp entero
         fwait ;subiendo a la memoria un dato
         mov bx,offset entero
         mov dx,[bx]
         call des1
+        ;call spc
         fild entero
-        fsub 
+        fsub
         loop ciclo
         ; Todas las intrucciones con f las mandan al coprosecador
-
+        
         ;fld Radio para en 2.0
         
         .exit 0

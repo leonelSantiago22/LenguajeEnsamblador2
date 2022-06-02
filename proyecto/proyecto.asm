@@ -10,7 +10,7 @@ extrn spc:near
     pre_cad db 2 dup(?)
     nombre_archivo db 20 dup(00h) 
     bufer 	 db 0fffh dup('$');el buffer es un espacio de memoria para poner temporalmente los datos  
-    bufer2 db "Hola buenas"
+    bufer2 db 0fffh dup('$')
     fid dw ?            ;Identidificador del archivo
     espacio dw ?
     vec db 50 dup('$')
@@ -18,14 +18,15 @@ extrn spc:near
 main:   mov ax,@data
         mov ds,ax 
                 
-        call leerelnombredelarchivo
-        ;call insertar_archivo
+        ;call leerelnombredelarchivo
+        call insertar_archivo
+        call cerrar_archivo
         ;call crear_archivo
-        ;call imprimir_archivo
-        ;call cerrar_archivo
-        call editar_archivo
+        call leerelnombredelarchivo
+        call imprimir_archivo
+        ;call editar_archivo
         ;call borrar_archivo
-         call cerrar_archivo
+        ;call cerrar_archivo
         
         .exit 0
 
@@ -35,6 +36,7 @@ error:  call reto
         mov dx,offset nombre_archivo
         mov ah,09h
         int 21h
+        call reto
         call des4
         ;.exit 1
 
@@ -84,14 +86,14 @@ imprimir_archivo:
 	mov dx,offset nombre_archivo ;Dirección del nombre
 	int 21h ;Abrir, devuelve ident
 	jc error ;En caso de error, saltar
-	mov fid,ax ;guardar identificador
-	;Leer el archivo
+	mov bx,ax ;guardar identificador
+	;Leer el archivo        
 	;fread( &contenido, srtlen( contenido ), 1, fid );
 	;dentro de un ciclo
                 cic_im:	mov ah,3Fh ;Código para leer archivo
-                        mov bx,fid ;Identificador
-                        mov cx,10h ;Tamaño deseado
-                        mov dx,offset bufer ;Dirección búfer
+                        mov bx,bx ;Identificador
+                        mov cx,1h ;Tamaño deseado
+                        mov dx,offset bufer2 ;Dirección búfer
                         int 21h ;Leer archivo
                         jc error ;Si hubo error, procesar
                         ;salir si ya no hay mas
@@ -100,11 +102,11 @@ imprimir_archivo:
                         cmp ax,0
                         je sal_im
                         mov bx,ax;nos dice cuanto leyo
-                        add bx,offset bufer
+                        add bx,offset bufer2
                         mov byte ptr[bx],'$'
                         mov espacio,bx  ;conocer cuantos espacios se imprimieron
                         ;Desplegar cadena leída
-                        mov dx,offset bufer
+                        mov dx,offset bufer2
                         mov ah,09h
                         int 21h
 		
@@ -153,6 +155,7 @@ pedir2: mov ah,01h
 ret
 
 insertar_archivo:
+        
         ;mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO                      ;SE ABRE EL FICHERO PARA TRABAJAR    
         mov si,0
 pedir:  mov ah,01h
@@ -185,9 +188,10 @@ pedir:  mov ah,01h
         int 21h                     ;SE GUARDA EL Mcd ENSAJE
         cmp cx,ax 
         jne salir_insertar
-        call crear_archivo
 
 salir_insertar:
+                
+
         ret
 cancelar:.exit 0
 leecad: mov bx,dx ;vamos a usar bx como apuntador
