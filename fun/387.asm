@@ -2,7 +2,7 @@
 .model small
 .386
 .387
-    
+    public desflo
     extrn desdec:near
     extrn des1:near
 .stack
