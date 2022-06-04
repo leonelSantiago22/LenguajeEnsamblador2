@@ -7,23 +7,28 @@ extrn des2:near
 extrn spc:near
 .stack
 .data
-    pre_cad db 2 dup(?)
-    nombre_archivo db 20 dup(00h) 
-    bufer 	 db 0fffh dup('$');el buffer es un espacio de memoria para poner temporalmente los datos  
-    bufer2 db 0fffh dup('$')
-    fid dw ?            ;Identidificador del archivo
-    espacio dw ?
-    vec db 50 dup('$')
+        posx db 0        ;posicion en x 
+        posy    db      0       ;posicion en y
+        numero_archivos db 0    ;contador de archivos
+        pre_cad db 2 dup(?)
+        nombre_archivo db 20 dup(00h) 
+        bufer 	 db 0fffh dup('$');el buffer es un espacio de memoria para poner temporalmente los datos  
+        bufer2 db 0fffh dup('$')
+        fid dw ?            ;Identidificador del archivo
+        espacio dw ?
+        vec db 50 dup('$')
+        buffer_archivo      DB     8000 DUP(20H) ;buffer para escribir en el archivo
 .code 
 main:   mov ax,@data
         mov ds,ax 
                 
-        ;call leerelnombredelarchivo
+        call leerelnombredelarchivo
+        call crear_archivo
         call insertar_archivo
         call cerrar_archivo
         ;call crear_archivo
-        call leerelnombredelarchivo
-        call imprimir_archivo
+        ;call leerelnombredelarchivo
+        ;call imprimir_archivo
         ;call editar_archivo
         ;call borrar_archivo
         ;call cerrar_archivo
@@ -65,7 +70,7 @@ desarr_cic:  lodsb
 crear_archivo:
         mov ah,3Ch ;Código para crear archivo.
         mov cx,0 ;Archivo normal.
-        mov dx,offset nombre_archivo ;Dirección del nombre.
+        lea dx, nombre_archivo ;Dirección del nombre.
         int 21h ;Crear y abrir, devuelve ident.
         jc error ;Saltar en caso de error.
         mov fid,ax
@@ -155,45 +160,19 @@ pedir2: mov ah,01h
 ret
 
 insertar_archivo:
-        
-        ;mov ah,3dh                    ;SERVICIO DE APERTURA DE ARCHIVO                      ;SE ABRE EL FICHERO PARA TRABAJAR    
-        mov si,0
-pedir:  mov ah,01h
-        mov bufer[si],al                ;obtenemos donde se encuentra la posicion
-                                  ;Incrementamos las posiciones que agregamos
-        int 21h
-        inc si
-        cmp al,1bh                      ;comparamos si es diferente de esc
-        ;ja pedir                        ;SEgumimos pidiendo
-        jne pedir
-        call reto
-        print "estas seguro que quieres hacer estos cambios? S/N"
-        mov ah,01h
-        int 21h
-        cmp al,6eh
-        je cancelar
-        call reto
-        print "Ingresa el nombre del archivo:"
-        call leerelnombredelarchivo
-        call crear_archivo
-        mov ah,3dh
-        mov al,1h  
-        mov dx,offset nombre_archivo  ;SE SETEA EL NOMBRE DEL ARCHIVO                  ;MODO SOLO ESCRITURA
-        int 21h                       ;SE ABRE EL FICHERO PARA TRABAJAR
-        jc error
-        mov bx,ax
-        mov cx,si               ;SETEO TAMANIO DE MENSAJE
-        mov dx,offset bufer   ;PONGO EL MENSAJE QUE SE VA A ESCRIBIR 
-        mov ah,40h                  ;SERVICIO PARA ESCRIBIR MENSAJE
-        int 21h                     ;SE GUARDA EL Mcd ENSAJE
-        cmp cx,ax 
-        jne salir_insertar
-
-salir_insertar:
-                
-
+        clc 
+                mov ah, 40H
+                mov bx,fid      ;obtenemos el identificador del arhivo
+                mov cx,8000     ;tamano de los caracteres a insertar
+                LEA dx,buffer_archivo    ;mandamos a llamar los dator para escribir
+                int 21H
+                jnc guardar_ok 
+                jc error
+guardar_ok:
         ret
-cancelar:.exit 0
+
+
+
 leecad: mov bx,dx ;vamos a usar bx como apuntador
         sub dx,2
         mov [bx-2],cl       ;ponemos donde apunta dx el tamano de la cadena
@@ -202,4 +181,67 @@ leecad: mov bx,dx ;vamos a usar bx como apuntador
         call reto
         mov al, [bx-1]          ;aqui pone realemente el tamano que leyo
         ret
+
+archivos_abrir:
+                push cx                 ;respaldamos el conteo
+                push ax 
+                cmp numero_archivos,05
+                jae muchos
+                clc                     ;limpiamos la bandera de acarrero
+                mov posx, 24            ;movemos la fila 
+                mov posy,9              ;movemos columna 
+                call cursor_locacion    ;locacion del cursor 
+                call nombre_del_archivo
+muchos:         
+ret
+
+;conocer el nombre del archivos
+nombre_del_archivo:
+                push ax 
+                push cx 
+                mov posx,24 
+                mov posy,9
+                call cursor_locacion
+
+                ;limpiar el buffer de entrada 
+                mov cx,20
+                mov si,00000
+limpiar:        mov nombre_archivo[SI],20H
+                inc si
+                loop limpiar
+
+                call leerelnombredelarchivo
+
+                pop cx 
+                pop ax 
+                ;entrada 
+
+
+ret
+
+escribir_caracter:
+                push ax 
+                push cx ;respaldo del uso de contadores 
+
+                mov ah,09h ; escribimos el caracter
+                mov bh, 0
+                mov bl, 71H     ;atributo q 
+                mov cx,1        ;inicializamos contador 
+                int 10h         ;escribir el caracter en la locacion del cursor 
+;ok
+es_rep:         call mover_derecha ;movemos a la derecha 
+                call cursor_locacion    ;localizacion del cursor
+                pop cx 
+                pop ax 
+ret
+;locacion del cursor
+cursor_locacion:
+                mov ah,02h 
+                mov bh,00
+                mov dh, posx  
+                mov dl, posy
+                int 10h         ;funcion 10h 
+ret
+
+
 end
