@@ -243,12 +243,5 @@ cursor_locacion:
                 int 10h         ;funcion 10h 
 ret
 
-salvar:
-        push   ax
-        call   Now                ;calculamos el tamano para salvar ese tamano
-        mov    BX, LO             ; movemos ese tamano a bx
-        LEA    DI, buffer
-        mov    [DI+BX], AL        ;movemos la entrada al bufer
-        pop    ax
-        ret
+
 end
