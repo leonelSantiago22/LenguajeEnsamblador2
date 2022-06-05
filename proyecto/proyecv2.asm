@@ -11,19 +11,18 @@ extrn spc:near
 ; DATA
 ;==============================================================================
 .DATA
-    posx       DB     00
-    posy       DB     00
-    Ltop      DB     00
-    InKey     DB     00           ; Keep the status of insert key
-    locacion        DW     0        ;saber en que columa estamos
+    posx        DB     00
+    posy        DB     00
+    Ltop        DB     00
+    InKey       DB     00           ;estado de la tecla de insercion
+    locacion    DW     0            ;saber en que columa estamos
 
 
-    Rlimit    EQU    79
-    Llimit    EQU    00
-    Dlimit    EQU    21
-    Tlimit    EQU    02
-    CHlimit   EQU    79
-	;------------------------------------
+    limite_derecho    EQU    79
+    limite_izquierdo    EQU    00
+    limite_inferior    EQU    21
+    limite_superior    EQU    02
+    limite_pantalla   EQU    79
 
     buffer      DB     8000 DUP(20H), 20H ; Buffer for content
     LIST      LABEL  BYTE
@@ -34,7 +33,7 @@ extrn spc:near
     fid   DW     ?
     ERROR     DB     '******ERROR******','$'
     archivo_temo       DB     'temp.txt',0 ;el archivo temporal nos ayuda mientras le pone un nombre al archivo
-    color db 71H    ;color del fondo
+    ;color db 71H    ;color del fondo
 
 .CODE
 main:
@@ -46,14 +45,14 @@ main:
         mov    ax, 0600H           ; movemos hasta arriba la pantalla
         call   limpiar_pantalla    ;funcion que limpia la pantatta
 
-        ;call   Menu                 ;menu
+        call   Menu                 ;menu
         call   crear_archivo        ;creamos un nuevo archivo
 
         mov    posy, 0		      ; posicionamos el cursos para que pueda empezar a escribir
         mov    posx, 2		      
 
 cic_main:
-        call   bloq_mayus                ;comprobamos si esta activo el bloq mayus 
+        call   tipo_captura                ;comprobamos si esta activo el bloq mayus 
         call   cursor_posicion          ;esta funcion nos permite mandas la posicion en la que se encuentra el cursor 
         call   entrada_del_usuarios     ;Entrada del usuario
         jmp    cic_main 
@@ -61,25 +60,24 @@ cic_main:
         .exit 0
 .386
 
-bloq_mayus:
+tipo_captura:
         push   cx
         push   ax
-        mov    DH, posy
-        mov    DL, posx
-        push   dx	              ; Backup posy and posx
-        ; Caps Lock
-        mov    posx, 24            ; posx location of cursor
-        mov    posy, 65            ; posyumn location of cursor
-        call   cursor_posicion              ; move cursor to show Caps Lock information
+        mov    dh, posy
+        mov    dl, posx
+        push   dx	              ;respaldamos las pos x y y 
+        mov    posx, 24            ;posicion x del cursor 
+        mov    posy, 65            ; posy locacion del cursor para escribir 
+        call   cursor_posicion     ; movemos el cursor para saber si estamos en como captura
         mov    ah, 02H
         int    16H                ; int 16H,02H - ck
-        mov    ah, 02H            ; int 21H,02H - write character to STDOUT
-        JNZ    CAPSON             ; Jump short if not zero (ZF=0)
+        mov    ah, 02H            ; int 21H,02H - escribe el caracter de salida
+        jnz    CAPSON             ; salta si no es cero o error
         mov    cx, 04
         mov    dl, 20H            ; Set the character writen to STDOUT to spcae 
-cic1_bloq_mayus:
+cic1_tipo_captura:
         int    21H
-        LOOP   cic1_bloq_mayus            ; Loop to clean Caps Lock information
+        loop   cic1_tipo_captura            ; loop to clean Caps Lock information
         jmp    num
 CAPSON: mov    dl, 'C'            ; Show CAPS
         int    21H
@@ -101,8 +99,8 @@ num:    ; Num Lock
         mov    dl, 20H            ; Set the character writen to STDOUT to spcae 
 NUMOFF:
         int    21H
-        LOOP   NUMOFF             ; Loop to clean Num Lock information
-        jmp    sal_bloq_mayus
+        loop   NUMOFF             ; loop to clean Num Lock information
+        jmp    sal_tipo_captura
 NUMON:  mov    dl, 'N'            ; Show NUM
         int    21H
         mov    dl, 'u'
@@ -110,7 +108,7 @@ NUMON:  mov    dl, 'N'            ; Show NUM
         mov    dl, 'm'
         int    21H
 
-sal_bloq_mayus:
+sal_tipo_captura:
         pop    dx                 ; restauramos la posicion x y y
         mov    posy, DH
         mov    posx, dl
@@ -234,7 +232,7 @@ extraer_nombre_archivo:
         mov    cx,25
         mov    al,20H
 EMPTY:  call   escribir_caracter
-        LOOP   EMPTY
+        loop   EMPTY
 
         mov    posx,24
         mov    posy,9
@@ -247,7 +245,7 @@ EMPTY:  call   escribir_caracter
         mov    SI, 0000
 CLEAN:  mov    nombre_archivo[SI], 20H
         INC    SI
-        LOOP   CLEAN
+        loop   CLEAN
 
         ;-----------------------------------
 		; Input
@@ -270,81 +268,18 @@ CLEAN:  mov    nombre_archivo[SI], 20H
 	;---------------------------------------
 Menu:
         mov    ax, 0600H
-        ;mov    BH, 71H          ;fondo blanco sobre azul    
+        mov    BH, 07H          ;fondo blanco sobre azul    
         mov    cx, 0000H
         mov    dx, 184FH
         int    10H
         call   cursor_posicion
         mov    ah, 02H
-        mov    dl, 'C'   
-        int    21H
-        mov    dl, 'r'
-        int    21H
-        mov    dl, 'e'
-        int    21H
-        mov    dl, 'a'
-        int    21H
-        mov    dl, 't'
-        int    21H
-        mov    dl, 'e'
-        int    21H
-        mov    dl, ' '
-        int    21H
-        mov    dl, 'O'
-        int    21H
-        mov    dl, 'p'
-        int    21H
-        mov    dl, 'e'
-        int    21H
-        mov    dl, 'n'
-        int    21H
-        mov    dl, ' '
-        int    21H
-        mov    dl, 'S'
-        int    21H
-        mov    dl, 'a'
-        int    21H
-        mov    dl, 'v'
-        int    21H
-        mov    dl, 'e'
-        int    21H
-        mov    dl, ' '
-        int    21H
-        mov    dl, 'W'
-        int    21H
-        mov    dl, 'i'
-        int    21H
-        mov    dl, 'n'
-        int    21H
-        mov    dl, 'd'
-        int    21H
-        mov    dl, 'o'
-        int    21H
-        mov    dl, 'w'
-        int    21H
-        mov    dl, ' '
-        int    21H
-        mov    dl, 'E'
-        int    21H
-        mov    dl, 'x'
-        int    21H
-        mov    dl, 'i'
-        int    21H
-        mov    dl, 't'
-        int    21H
         mov    posx, 1
         call   cursor_posicion
-        mov    cx, 80
-LINE1:  mov    dl, '='
-        int    21H
-        LOOP   LINE1
 
         mov    posx, 23
         call   cursor_posicion
-        mov    cx, 80
-LINE2:  mov    dl, '='
-        int    21H
-        LOOP   LINE2
+        
         mov    posx, 24
         mov    posy, 0
         call   cursor_posicion
@@ -385,17 +320,11 @@ LINE2:  mov    dl, '='
         int    21H
         mov    posx, 2
         ret
-	;---------------------------------------
-	; End of show menu bar and status bar
-	;---------------------------------------
 
-    ;---------------------------------------
-	; User input
-	;---------------------------------------
 entrada_del_usuarios:
         mov    ah, 10H            ;esperamos los datos de entrada
         int    16H
-        cmp    ah, 01H              ;escape
+        cmp    ah, 01H              ;	Obtener el estado del buffer del teclado
         je     sal_en               ;si es esc salimos de la lectura de datos den entrada
         cmp    al, 00H              ;si no hubo errores
         je     FunKey            
@@ -410,7 +339,7 @@ Funkey:
         jmp    salida_entrada_usuarios
 salto1: cmp    ah, 4FH            ; busca el siguiente
         JNE    salto2
-        call   toEND              ; si si para llamar a brincar al final
+        call   limite_y              ; si si para llamar a brincar al final
         jmp    salida_entrada_usuarios             ; salir
 salto2:
         cmp    ah, 50H            ; abajo de la posicon de X 
@@ -418,82 +347,64 @@ salto2:
         call   para_abajo             ; para_abajo
         jmp    salida_entrada_usuarios             ; salir
 
-salto3:  cmp    ah, 48H            ; Up arposx?
+salto3:  cmp    ah, 48H            ; arriba
         JNE    ArrR
         call   toUp               ; toUp
         jmp    salida_entrada_usuarios             ; leave
 
-ArrR:   cmp    ah, 4DH            ; Right arposx?
+ArrR:   cmp    ah, 4DH            ; flcha derecha
         JNE    ArrL
         call   mover_derecha                ; mover_derecha
         jmp    salida_entrada_usuarios             ; leave
 
-ArrL:   cmp    ah, 4BH            ; Left arposx?
-        JNE    InsKey
-        call   limite_izquierdo                ; limite_izquierdo
+ArrL:   cmp    ah, 4BH            ;flecha izquierda
+        JNE    tecla_enter
+        call   limite_izquierdo_tecla                ; limite_izquierdo
+        jmp    salida_entrada_usuarios             ; salir
+
+tecla_enter: cmp    ah, 52H            ; es insertar?
+        jne    tecla_arriba
+        call   tecla_insertar              ; tecla_insertar
         jmp    salida_entrada_usuarios             ; leave
 
-InsKey: cmp    ah, 52H            ; Insert?
-        jne    PUKey
-        call   toIns              ; toIns
+tecla_arriba:  cmp    ah, 49H            ; flecha arriba
+        JNE    tecla_abajo
+        call   subir_pagina              ; subir_pagina
         jmp    salida_entrada_usuarios             ; leave
 
-PUKey:  cmp    ah, 49H            ; Page UP?
-        JNE    PDKey
-        call   toPUP              ; toPUP
+tecla_abajo:  cmp    ah, 51H        ; flecha abajo
+        JNE    tecla_borrar
+        call   bajar_pagina              ; bajar_pagina
         jmp    salida_entrada_usuarios             ; leave
 
-PDKey:  cmp    ah, 51H            ; Page Down?
-        JNE    DELKey
-        call   toPDO              ; toPDO
-        jmp    salida_entrada_usuarios             ; leave
-
-DELKey: cmp    ah, 53H            ; borrar_caracter key?
-        JNE    salida_entrada_usuarios             ; leave
+tecla_borrar: cmp    ah, 53H            ; borrar_caracter 
+        JNE    salida_entrada_usuarios             ; salir
         call   borrar_caracter             ; call borrar_caracter
 
 salida_entrada_usuarios: ret
 sal_en:  call   esc_escribir
         ret
-	;---------------------------------------
-	; End of user input
-	;---------------------------------------
 
-	;---------------------------------------
-	; Function of home key
-	;---------------------------------------
 restablecer_posicion_inicial:
-        mov    posy, 00            ; Set posyumn to zero
+        mov    posy, 00            ; pos 00
         ret
-	;---------------------------------------
-	; End of function of home key
-	;---------------------------------------
 
-	;---------------------------------------
-	; Function of page up key
-	;---------------------------------------
-toPUP:
+	; funcion de tecla hacia arriba
+subir_pagina:
         mov    cx, 19             ; move up 19 times
-REUP:   call   toUp               ; Up
+cic_subir:   call   toUp               ; Up
         call   cursor_posicion              ; move cursor location
-        LOOP   REUP
+        loop   cic_subir
         ret
-	;---------------------------------------
-	; End of function of page up key
-	;---------------------------------------
 
-	;---------------------------------------
-	; Function of page down key
-	;---------------------------------------
-toPDO:
-        mov    cx, 19             ; move down 19 times
-REDOWN: call   para_abajo             ; Down
-        call   cursor_posicion              ; move cursor location
-        LOOP   REDOWN
+;funcion que nos permitte bajar la pagina
+bajar_pagina:
+        mov    cx, 19                   ;mover  19 veces hacia abajo
+cic_bajar: call   para_abajo               ;bajar
+        call   cursor_posicion          ; move cursor location
+        loop   cic_bajar
         ret
-	;---------------------------------------
-	; End of function of page down key
-	;---------------------------------------
+
 
 ;nos permite cambiar entre la pantalla de menu y la pantalla de editar
 esc_escribir:
@@ -506,137 +417,102 @@ reestablecer_esc:
         mov    posx, 00            ; Menu bar
         mov    posy, 2
 sal_esc: ret
-	;---------------------------------------
-	; End of switch between menu bar and editor space
-	;---------------------------------------
 
-	;---------------------------------------
-	; End key
-	;---------------------------------------
-toEND:
-        mov    posy, Rlimit        ; move cursor location to last
+
+limite_y:
+        mov    posy, limite_derecho        ; move cursor location to last
         ret
-	;---------------------------------------
-	; End of end key
-	;---------------------------------------
 
-	;---------------------------------------
-	; Down arposx
-	;---------------------------------------
 para_abajo:
         cmp    posx, 00
-        je     isMenu             ; Skip action when in menu bar
-        cmp    posx, dlimit        ; Down limit?
+        je     sal_abajo             ; saltamos si es una accion dentro del menu
+        cmp    posx, limite_inferior        ; limite de x 
         JAE    scrU
-        INC    posx                ; Next posx
+        INC    posx                ; siguiente posicion de x
 
-        ;-----------------------------------
-	    ; Scroll up if at buttom of editor sapce
-	    ;-----------------------------------
-scrU:   cmp    Ltop, CHlimit
-        JAE    isMenu
+	    ; Desplácese hacia arriba si está en la parte inferior del espacio del editor
+scrU:   cmp    Ltop, limite_pantalla
+        JAE    sal_abajo
         mov    ax, 0601H        
-        call   limpiar_pantalla             ; Scroll up
+        call   limpiar_pantalla             ; hacia arriba
         INC    Ltop
         call   SCR1
-        jmp    isMenu             ; Leave
-isMenu: ret 
-	;---------------------------------------
-	; End of down arposx
-	;---------------------------------------
+        jmp    sal_abajo             ; Leave
+sal_abajo: ret 
 
-	;---------------------------------------
-	; Deal with contents when scroll one line
-	;---------------------------------------
+
+; Tratar con los contenidos cuando se desplaza una línea
+
 SCR1:
         push   cx
-        mov    DH, posx            ; Save current cursor location
+        mov    DH, posx            ;salvamos las posiciones del curo
         mov    dl, posy
         push   dx
         mov    posy, 0
-        call   cursor                ; Judge cursor location
-        call   cursor_posicion              ; move cursor location
-        mov    BX, locacion
-        LEA    SI, [buffer+BX]
-de:     mov    al, [SI]           ; move the character to al for print
+        call   cursor                ; juzgar la ubicación del cursor
+        call   cursor_posicion        ;movemos en donde se encuentra el cursor
+        mov    BX, locacion         ;locacion del cursor la movemos a bx
+        LEA    SI, [buffer+BX]      ;nos movemos en el bufer dependiendo del contenido
+de:     mov    al, [SI]           ; movemos o desplazamos el caracter para imprimir
         INC    SI
-        call   escribir_caracter              ; print
-        cmp    posy, Rlimit
+        call   escribir_caracter    ;imprimirmos el caracter
+        cmp    posy, limite_derecho         ;revisamos si estamos en el limite derecho
         JB     de
 
-		;-----------------------------------
-		; Last character
-		;-----------------------------------
+		;ultimo caracter
         call   cursor
-        mov    BX, locacion
+        mov    BX, locacion         ;nuevamente volvemos a obtener la locacion
         mov    al, [buffer+BX]
-        mov    ah, 09H
+        mov    ah, 09H              ;imprimimos el contenido
         mov    BH, 0
-        ;mov    BL, 71H
+        mov    BL, 07H              ;;Atributo de relleno
         mov    cx, 01
         int    10H
-        pop    dx                 ; Recover saved cursor location
-        mov    posx, DH
+        pop    dx                 ; restauramos las posiciones anteriormente guardadas
+        mov    posx, DH             ;cambiamos por las nuevas posiciones
         mov    posy, dl
         pop    cx
         ret
-	;---------------------------------------
-	; End of deal with contents when scroll one line
-	;---------------------------------------
 
-	;---------------------------------------
-	; Up arposx
-	;---------------------------------------
 toUp:
         cmp    posx, 00
-        je     skipMune           ; Skip menu bar
-        cmp    posx, Tlimit        ; Top limit?
+        je     salida_tra           ; Skip menu bar
+        cmp    posx, limite_superior        ;estamos en el limitesuperior?
         JBE    scrD
-        DEC    posx                ; Decrease one posx
-		;-----------------------------------
-		; Scroll down one posx when reach top limit
-		;-----------------------------------
+        DEC    posx                ; decrementamos la posicion de lo contrario
+;Desplácese hacia abajo una posx cuando alcance el límite superior
 scrD:   cmp    Ltop, 01
-        JB     skipMune
+        JB     salida_tra
         mov    ax, 0701H        
         call   limpiar_pantalla             ; int 10H,07H - scroll down
         DEC    Ltop
         call   SCR1
         
-skipMune:
+salida_tra:
         ret
-	;---------------------------------------
-	; End of up arposx
-	;---------------------------------------
 
-	;---------------------------------------
-	; Right arposx
-	;---------------------------------------
+
 mover_derecha:
-        cmp    posy, Rlimit        ; Right limit?
-        JAE    nextL
+        cmp    posy, limite_derecho        ; Right limit?
+        JAE    linea_siguiente
         INC    posy                ; Increase posyumn
         ret
-nextL:
-        ;-----------------------------------
-		; move to next posx when reach right limit
-		;-----------------------------------
-        cmp    Ltop, CHlimit
-        JB     rightest
-        ret
-rightest:
+linea_siguiente:
+		; pasar a la siguiente posx cuando alcance el límite derecho
+        cmp    Ltop, limite_pantalla
+        JB     mas_derecha
+        jmp sal_derecha
+mas_derecha:    ;nos movemos a la posicion inicial de la derecha
         call   restablecer_posicion_inicial
         call   para_abajo
-        ret
+sal_derecha:ret
 	;---------------------------------------
 	; End of right arposx
 	;---------------------------------------
 
-	;---------------------------------------
-	; Left arposx
-	;---------------------------------------
-limite_izquierdo:
-        cmp    posy, Llimit        ; Left limit?
+
+limite_izquierdo_tecla:
+        cmp    posy, limite_izquierdo        ; Left limit?
         JBE    up
         DEC    posy                ; Decrease posyumn
         ret
@@ -644,54 +520,46 @@ up:
         ;-----------------------------------
 		; move to up posx when reach left limit
 		;-----------------------------------
-        call   toEND
+        call   limite_y
         call   toUp
         ret
 	;---------------------------------------
 	; End of left arposx
 	;---------------------------------------
 
-	;---------------------------------------
-	; borrar_caracter key
-	;---------------------------------------
+;tecla borrar
 borrar_caracter:
-        mov    BH, posy
+        mov    BH, posy             ;obtenmos las posiciones 
         mov    BL, posx
         push   BX                 ;salvamos las posisciones
-        call   cursor
-        mov    BX, locacion
+        call   cursor               ;imprimirmos lo que tenemis
+        mov    BX, locacion         ;ahora referemos en que posicion estamos
         LEA    DI, [buffer+BX]      ;guardamos la posicion del arrelo
-        LEA    SI, [buffer+BX+1]
+        LEA    SI, [buffer+BX+1]    ;cuando escriba de nuevo ponerlo adelante del caracter borrado
 borrar_c: mov    al, [SI]
         mov    [DI], al
-        INC    SI
+        INC    SI                   ;cada que escriba nos movemos a la siguiente posicion
         INC    DI
-        call   escribir_caracter
-        cmp    posy, Rlimit        ;si ya estamos en el limite de la pantalla
+        call   escribir_caracter        ;escribimos el caracter leido
+        cmp    posy, limite_derecho        ;si ya estamos en el limite de la pantalla
         JB     borrar_c
 
-        call   cursor
-        mov    BX,locacion
-        mov    [buffer+BX], 20H
-        mov    al, 20H
-        mov    ah, 09H
-        mov    BH, 0
-        ;mov    BL, 71H
-        mov    cx, 01
+        call   cursor                       ;mandamos a taer el cursor
+        mov    BX,locacion                  ;referimos la locacion del mismo
+        mov    [buffer+BX], 20H         ;final de los caracteres de modo grafico
+        mov    al, 20H                  ;movemos el final de cadena en al 
+        mov    ah, 09H                  ;
+        mov    BH, 0                    ;bloque a leer 
+        mov    BL, 07H                  ;numero de bytes por caracter
+        mov    cx, 01                   ;numero de caracteres a cambiar 
         int    10H
 
-        pop    BX                 ; Recover saved cursor location
+        pop    BX                 ;regresamos los datos originales 
         mov    posy, BH
         mov    posx, BL
         ret
-	;---------------------------------------
-	; End of borrar_caracter key
-	;---------------------------------------
 
-	;---------------------------------------
-	; Insert key
-	;---------------------------------------
-toIns:
+tecla_insertar:
         mov    DH, posy
         mov    dl, posx
         push   dx
@@ -708,8 +576,9 @@ toIns:
 INSERTOFF:
         mov    dl, 20H
         int    21H
-        LOOP   INSERTOFF
+        loop   INSERTOFF
         jmp    INSERTEND
+;colocamos en la esquina inferior derecha que estamos en modo de insercion
 INSERTON:
         mov    dl, 'I'
         int    21H
@@ -724,9 +593,6 @@ INSERTEND:
         mov    posy, DH
         mov    posx, dl
         ret
-	;---------------------------------------
-	; End of insert key
-	;---------------------------------------
 
 ;comprobar que los datos de entrada son un caracter
 comprobar_caracter:
@@ -767,7 +633,7 @@ Tab:
 repeatSpace:
         call   salvar             ; Save content into buffer
         call   escribir_caracter              ; Show space
-        LOOP   repeatSpace
+        loop   repeatSpace
         ret
 
 IN_ON:  call    insertar_archivo            ; Insert
@@ -849,9 +715,7 @@ Lout:   call   restablecer_posicion_inicial
         call   para_abajo
         ret
 
-	;---------------------------------------
-	; Deal with data in insert mode
-	;---------------------------------------
+;datos en modo insercion del archivo 
 insertar_archivo:
         call   cursor
         mov    cx, 8000
@@ -864,26 +728,23 @@ L1:     mov    DH, [SI]
         DEC    cx
         cmp    cx, locacion             ; completamos el movimiento
         ja     L1                       ;Salta si está arriba o si es igual o salta si no está abajo.
-
         call   escribir_caracter                ; Wescribirmos el caracter
         call   salvar                           ;salvamos lo que tiene escrito en el buffer
-        
         mov    BH, posy
         mov    BL, posx
         push   BX                       ;respladamos en pila las posiciones
         call   cursor                   ;llamamos el cursor
-        mov    BX, locacion
-        mov    DH, Ltop
+        mov    BX, locacion             ;llamamos la locacion del cursor
+        mov    DH, Ltop                ;mocemos lo que tenemos en dh que en este caso es el lo que tiene el buffer en SI que es el contador
         push   dx
-        mov    Ltop, 00
+        mov    Ltop, 00             ;seteamos el tope izquiero como 00 para volver iniciar en la siguiente linea
         call   cursor
-        mov    cx, locacion
-
-        LEA    DI, buffer
+        mov    cx, locacion         ;obtenemos la locacion
+        LEA    DI, buffer           ;movemos lo que tiene el bufer a di 
 	;mostrar y mover el caracter
 L2:     mov    al, [DI+BX]    
-        INC    BX        
-        INC    cx
+        INC    BX                   ;incrementamos bx ambas posiciones tanto x como y
+        INC    cx                   ;incrementamos cx la locacion
         call   escribir_caracter        
         cmp    cx, 1598        
         JBE    L2
@@ -891,7 +752,7 @@ L2:     mov    al, [DI+BX]
         mov    al, buffer+1599  ;pongo el 1599       
         mov    ah, 09H            
         mov    BH, 0            
-        ;mov    BL, 71H            
+        mov    BL, 07H            
         mov    cx, 01            
         int    10H
         pop    dx
@@ -924,12 +785,12 @@ cursor:
         movZX  dx, Ltop           ;movzx es para tranferir un dato agregando ceros
         ADD    cx, dx
         cmp    cx, 01             ; First posx?
-        JB     addposy
+        JB     agregar_posy
 
-addposx: add   locacion, 80             ;agregamos 80 posiciones adicionales a X 
-        LOOP   addposx
+agregar_posx: add   locacion, 80             ;agregamos 80 posiciones adicionales a X 
+        loop   agregar_posx
         
-addposy: movZX  dx, posy           ;tranferimos un dato agregando ceros
+agregar_posy: movZX  dx, posy           ;tranferimos un dato agregando ceros
         add    locacion, dx
 
         pop    dx
@@ -942,7 +803,7 @@ escribir_caracter:
         push   cx
         mov    ah, 09H
         mov    bh, 0              ; numero de caracter
-        ;mov    bl, 71H            ; atributo de fondo blanco sobre azul
+        mov    bl, 07H            ; atributo de fondo blanco sobre azul
         mov    cx, 1
         int    10H                ; int 10H,09H - escribir el caracter en la locacion designada
         call   mover_derecha                ; mover a la derecha para ir a la siguiente posicion
@@ -963,7 +824,7 @@ cursor_posicion:
 
 limpiar_pantalla:   
         push   cx                
-        ;mov    BH, 71H            ; posyor
+        mov    BH, 07H            ; posyor
         mov    cx, 0200H          ; Top-Left
         mov    DX, 164FH          ; Right-Down
         int    10H

@@ -235,13 +235,13 @@ es_rep:         call mover_derecha ;movemos a la derecha
                 pop ax 
 ret
 ;locacion del cursor
-cursor_locacion:
-                mov ah,02h 
-                mov bh,00
-                mov dh, posx  
-                mov dl, posy
-                int 10h         ;funcion 10h 
-ret
+cursor_posicion:
+        mov    ah, 02H
+        mov    BH, 00
+        mov    DH, posx
+        mov    dl, posy
+        int    10H                ; int 10H,02H -  Set cursor location
+        ret
 
 salvar:
         push   ax
@@ -251,4 +251,59 @@ salvar:
         mov    [DI+BX], AL        ;movemos la entrada al bufer
         pop    ax
         ret
+
+limpiar_pantalla:   
+push   cx                
+mov    BH, 71H            ; posyor
+mov    cx, 0200H          ; maximo, dertcha
+mov    DX, 164FH          ; arriba anajo
+int    10H
+pop    cx
+ret
+
+crear_archivo2:   
+        push   cx
+        push   ax
+        clc                                     ;bandera de acarreo limpiar
+        mov    posx, 24
+        mov    posy, 9
+        call   cursor_posicion                  ; move cursor location for input crear_archivo2 name
+        call   extraer_nombre_archivo           ; llamamos a llamar el nombre
+        pop    ax
+        mov    al, 00
+        mov    cx, 00                           ; abrimos el arhivo en normal
+        lea    dx, nombre_archivo            ; nombre del archivo 
+        int    21H
+        jc     eror_archivo
+        mov    fid, ax                      ; mandamos el nombre del archivo al identificador
+        jmp    sal_archivo
+eror_archivo:        
+        mov    posx, 24
+        mov    posy, 9
+        call   cursor_posicion                  ;locacion del sursor para imprimir el mismo eh imprimir el mensaje de error
+        mov    dx,ax                        ; 
+        call des4                            ;desplegamos el mendaje de error
+sal_archivo:
+        ;restablecemos el cursor
+        mov    posx, 00
+        mov    posy, 00
+        call   cursor_posicion              ; move cursor location
+        pop    cx
+        ret
+        pop    ax       ;restauramos la pila
+        jmp    eror_archivo
+
+;escribir en el archivo
+escribir_archivo:
+        CLC
+        mov    ah, 40H
+        mov    BX, fid              ; extraemo el  handle del archivo (identificador)
+        mov    cx, 8000             ;numero de datos a escribir
+        LEA    dx, buffer         
+        int    21H               
+        JNC    sal_escribirarchivo
+        LEA    dx, ERROR          ; Show error message if save fail
+        mov    ah, 09H
+        int    21H
+sal_escribirarchivo: ret
 end
