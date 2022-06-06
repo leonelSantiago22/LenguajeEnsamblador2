@@ -83,15 +83,14 @@ menu:
 		mov cx,0000h
 		mov dx,184fh;hasta donde acaba la pantalla 
 		int 10h;con 10h se puede hacer todo lo demas s
-		call reto
-        print "|1=Crear archivo |"
-        print " |2=Imprimir archivo|"
-		call reto
-        print "|3=Guardar archivo|"
-        print " |4=Modificar archivo|"
-		print " |5=Borrar archivo|"
+		
+        print "|F1=Crear  |"
+        print " |F2=Imprimir|"
+        print "|F3=Guardar|"
+        print " |F4=Modificar|"
+	print " |F5=Borrar|"
         print " |ESC=Salir|"
-		call reto
+		
 		
 		;leer la opcion del usuario
 		mov ah,01
@@ -99,8 +98,6 @@ menu:
 		;regresar en dx la opcion
 		mov ah,0
 		mov dx,ax
-
-
 ret 	
 
 leerelnombredelarchivo:
