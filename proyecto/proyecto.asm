@@ -37,9 +37,8 @@ extrn spc:near
     limite_pantalla   EQU    79
 
     buffer      DB     8000 DUP(20H), 20H ; Buffer para contenido maximo de 8000 caracteres
-    LIST      LABEL  BYTE                       ;
-    MAX_L     DB     21
-    LEN       DB     ?
+    LIST      LABEL  BYTE                       ;label como un nombre que inventa para usar como soporte de dirección.
+    aux       DB     ?
     nombre_archivo   DB     23 DUP(' ')  ; Buffer for crear_archivo2 name
     fid   DW     ?
     archivo_temo       DB     'temp.txt',0 ;el archivo temporal nos ayuda mientras le pone un nombre al archivo
@@ -68,7 +67,6 @@ cic_main:
         jmp    cic_main 
         ;salida del programa
         .exit 0
-.386
 ;la funcion nos permite estar constantemente revisando el tipo de captura de datos activos
 tipo_captura:
         push   cx
@@ -204,6 +202,7 @@ extraer_nombre_archivo:
         ;limpiamos el espacio de entrada
         mov    cx,25
         mov    al,20H
+
 nombre_lleno:  call   escribir_caracter
         loop   nombre_lleno
         mov    posx,24
@@ -218,11 +217,11 @@ limpiar_nombre:  mov    nombre_archivo[si], 20H
         mov    ah, 0ah
         lea    dx, LIST
         int    21H
-        movZX  BX, LEN                   ;movzx es para tranferir un dato agregando ceros
+        movZX  BX, aux                   ;movzx es para tranferir un dato agregando ceros
         mov    nombre_archivo[BX], 00H
         pop    cx
         pop    ax
-        ret
+sal_extraer:       ret
 
 ;menu del programa
 Menu:
@@ -263,37 +262,28 @@ entrada_del_usuarios:
         cmp    ah, 01H              ;y saber si es un esc scan_code de la tecla pulsada
         je     sal_en               ;si es esc salimos de la lectura de datos den entrada
         cmp    al, 00H              ;Leer pulsacion de la tecla
-        je     teclaso            
+        je     salto1            
         cmp    al, 0E0H             ;es una tecla de funcion extendida como las flecas
-        je     teclaso
+        je     salto1
         call   comprobar_caracter   ;comprobamos que los datos de entrada sean un caracter
-        jmp    salida_entrada_usuarios             ; leave
-teclaso:
-        cmp    ah, 47H            ; tecla de home
-        jne    salto1               ;si no es la tecla de terminar
-        call   restablecer_posicion_inicial ; restablecer_posicion_inicial
-        jmp    salida_entrada_usuarios
-salto1: cmp    ah, 4FH            ;tecla end del teclado 
-        jne    salto2
-        call   limite_y              ; si si para llamar a brincar al final
-        jmp    salida_entrada_usuarios             ; salir
-salto2:
+        jmp    salida_entrada_usuarios             ; salir  ; salir
+salto1:
         cmp    ah, 50H            ; abajo de la posicon de X 
-        jne    salto3
+        jne    salto2
         call   para_abajo             ; para_abajo
         jmp    salida_entrada_usuarios             ; salir
 
-salto3:  cmp    ah, 48H            ; arriba
-        jne    ArrR
+salto2:  cmp    ah, 48H            ; arriba
+        jne    fle_dere
         call   pa_arriba               ; pa_arriba
-        jmp    salida_entrada_usuarios             ; leave
+        jmp    salida_entrada_usuarios             ; salir
 
-ArrR:   cmp    ah, 4dh            ; flcha derecha
-        jne    ArrL
+fle_dere:   cmp    ah, 4dh            ; flcha derecha
+        jne    fle_izqui
         call   mover_derecha                ; mover_derecha
-        jmp    salida_entrada_usuarios             ; leave
+        jmp    salida_entrada_usuarios             ; salir
 
-ArrL:   cmp    ah, 4BH            ;flecha izquierda
+fle_izqui:   cmp    ah, 4BH            ;flecha izquierda
         jne    tecla_ins
         call   limite_izquierdo_tecla                ; limite_izquierdo
         jmp    salida_entrada_usuarios             ; salir
@@ -301,17 +291,17 @@ ArrL:   cmp    ah, 4BH            ;flecha izquierda
 tecla_ins: cmp    ah, 52H            ;teclas insertar o ins del teclado
         jne    tecla_arriba
         call   tecla_insertar              ; tecla_insertar
-        jmp    salida_entrada_usuarios             ; leave
+        jmp    salida_entrada_usuarios             ; salir
 
 tecla_arriba:  cmp    ah, 49H            ;tecla page up
         jne    tecla_abajo
         call   subir_pagina              ; subir_pagina
-        jmp    salida_entrada_usuarios             ; leave
+        jmp    salida_entrada_usuarios             ; salir
 
 tecla_abajo:  cmp    ah, 51H        ; tecla page down
         jne    tecla_borrar
         call   bajar_pagina              ; bajar_pagina
-        jmp    salida_entrada_usuarios             ; leave
+        jmp    salida_entrada_usuarios             ; salir
 
 tecla_borrar: cmp    ah, 53H            ; con 'del' del teclado 
         jne    tecla_f1             ; tecla f1
@@ -329,7 +319,7 @@ tecla_f3:       cmp ah,3dh
                 jne salida_entrada_usuarios
                 call pulso_f3
                 jmp salida_entrada_usuarios
-sal_en: .exit 0               ;cuando presiona esc salimos    
+sal_en: .exit 0               ;cuando presiona esc salimos    del programa
 salida_entrada_usuarios:       ret              ;cuando no ah apretado esc
 
 
@@ -369,7 +359,7 @@ sal_esc: ret
 
 
 limite_y:
-        mov    posy, limite_derecho        ; move cursor location to last
+        mov    posy, limite_derecho        ;movemos el cursor a la ultima posicion
         ret
 
 ;para abajo es una funcion que nos permite detectar
@@ -523,6 +513,7 @@ ins_salt_apa:
         loop   ins_salt_apa
         jmp    ins_fin
 ;colocamos en la esquina inferior derecha que estamos en modo de insercion
+;para saber si estamos insertando sobre un archivo
 colocamos_el_insertar:
         print "ins"
 ins_fin:
@@ -577,20 +568,20 @@ Ent:    call    pulso_f1
 
 ;lo que ocurre cuando presionamor eter
 pulso_f1:
-        mov    ax, 0600H          ;posicionar scroll y limpiar
-        call   limpiar_pantalla   
-        mov    ah, 3CH            ;funcion para crear el arhivo
-        mov al,00
-        call   crear_archivo2               ; crear nuevo archivo
-        call restablecer_posicion_inicial
-        call para_abajo
+        mov     ax, 0600H          ;posicionar scroll y limpiar
+        call    limpiar_pantalla   
+        mov     ah, 3CH            ;funcion para crear el arhivo
+        mov     al,00                   ;posicionamos en que tipo de apertura abrimos el archivo
+        call    crear_archivo2               ; crear nuevo archivo
+        call    restablecer_posicion_inicial
+        call    para_abajo
         ret
 ;abrir archivo
 pulso_f2:
         mov    ax, 0600H          ;posicionamos el scroll y lo limiamos
         call   limpiar_pantalla   ; Scroll
         mov    ah,3dh            ;abrimos el archivo solo en modo apartura
-        mov al,02
+        mov    al,02            ;tipo de apertura de lectura/escritura
         call   crear_archivo2     ;abrimos o creamos un archivo
         call   leer               ;leemos el contenido de este
         call   restablecer_posicion_inicial
@@ -738,4 +729,4 @@ limpiar_pantalla:
         pop    cx
         ret                
 
-END ;fin del programa
+end ;fin del programa
