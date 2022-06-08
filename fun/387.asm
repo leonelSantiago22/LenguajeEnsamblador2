@@ -3,14 +3,19 @@
 .386
 .387
     public desflo
+    public leeflo       ;leer flotante
     extrn desdec:near
     extrn des1:near
+    extrn lee1:near
 .stack
 .data
     ;DatoFlo dd 13.99 ;Flotante de 32 bits.
     df_entero  dd ?
     df_diez   dd 10
-    df_medio   dd 0.5
+    df_medio   dd 0.49999
+        lf_divisor         dd 10.0
+        lf_diez            dd 10.0
+        lf_tecla           dd 0
 .code
 ;Recibir el dato por la pila
 desflo: 
@@ -39,9 +44,9 @@ pusha
         fild df_entero ;pila: entero dato dato xxx xxx
         fsub        ;pila: dato-entero dato xxx xxx
         ;reptir 4 veces
-        mov cx,4
+        mov cx,8
 
-df_cic:  fild df_diez   ;pila: 10.0 dato-entero dato xxx xxx
+df_cic: fild df_diez   ;pila: 10.0 dato-entero dato xxx xxx
         fmul        ;pila: 10*(dato-entero) dato xxx xxx
         ;4.2 extraer parte entera
         fld ST(0)   ;pila: datorestante datorestante dato xxx xxx 
@@ -64,4 +69,55 @@ df_cic:  fild df_diez   ;pila: 10.0 dato-entero dato xxx xxx
         ;fld Radio para en 2.0
 popa
         ret
+leeflo:
+                
+;Leer numero y poner en la pila
+                fldz                        ;pila: 0.0 xxx yyy
+;2.- Repetir
+lf_cic1:    
+;    2.1.- Leer teclazo
+            call lee1
+;    2.2.- Si teclazo = enter
+            cmp al,0ddh
+;        2.2.1 pasar a paso 4
+            je lf_sal
+;     2.3 si teclazo = '.'
+            cmp al,0feh
+;        2.3.1 salir del ciclo
+            je lf_cic2
+;    2.4 multiplicar acumulador por 10
+            fld lf_diez                ;pila: 10.0 acumulador xxx yyy
+            fmul                    ;pila acumulador*10 xxx yyy
+;    2.5 sumar digito entero al acumulador
+            mov bx,offset lf_tecla
+            mov [bx],al             ;que es lo que tiene la tecla operacion de 8 bits
+            fild lf_tecla              ;cargar el teclazo
+                                    ;pila:  tecla acum*10 xx yy
+            fadd                    ;tecla mas acumulador
+            jmp lf_cic1
+lf_cic2:
+;3.Repetir
+;    3.1 leer teclazo 
+            call lee1
+;    3.2. Si teclazo = enter
+            cmp al,0ddh                 ;comparamos si lo que ingreso es un enter
+;        3.2.1 saltar al paso 4
+            je lf_sal
+;    3.3 dividir digito entre divisor
+            mov bx,offset lf_tecla
+            mov [bx],al             ;que es lo que tiene la tecla operacion de 8 bits
+            fild lf_tecla              ;cargar el teclazo
+                                    ;pila: tecla cumuladot xxx yyy
+            fld lf_divisor             ;pila: lf_lf_divisor tecla acumulador xxx yyy
+            fdiv                    ;pila: tecla/divisor acumulador xxx yyy
+;    3.4 sumar al acumulador
+            fadd                    ;resultado de la division se lo sumammos al acumulador
+;    3.5 multiplicar divisor por 10
+            ;cargamos el divisor
+            fld lf_divisor            ;pila: dividor acum xxx yyy 
+            fld lf_diez                ;pila: 10 dividor acum xxx yyy 
+            fmul                    ;10*divisor acum xxx yyy
+            fstp lf_divisor            ;acum xxx yyy
+            jmp lf_cic2
+lf_sal:     ret
 end

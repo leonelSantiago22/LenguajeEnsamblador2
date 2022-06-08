@@ -59,7 +59,7 @@ main:
 
         mov    posy, 0		      ; posicionamos el cursos para que pueda empezar a escribir
         mov    posx, 2		      
-
+        ;estamos en un estado permanente de entrada 
 cic_main:
         call   tipo_captura                ;comprobamos si esta activo el bloq mayus 
         call   cursor_posicion          ;esta funcion nos permite mandas la posicion en la que se encuentra el cursor 

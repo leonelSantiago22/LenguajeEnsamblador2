@@ -24,7 +24,7 @@ extrn spc:near
     Ltop        DB     00               ;medida en la que estamos
     InKey       DB     00               ;estado de la tecla de insercion para conocer si esta activa
     locacion    DW     0                ;saber en que columa estamos
-
+        cant_enter DB 02
 ;directiva EQU lo que hace es que asigna al valor simbolico de una expresion. 
 ;Cuando encuentre el codigo dicho nombre simbolico. lo sustituira por el valor de la expresion
 ;en este caso una contante numerica que nos indica el valor de los limites de la pantalla 
@@ -162,11 +162,11 @@ sal_archivo:
         ret
 ;salvamos la escritura del archivo
 escribir_archivo:
-        ;CLC                             ;limpiar bandera de acarreo
+        CLC                             ;limpiar bandera de acarreo
         mov    ah, 40H              ;Escritura en dispositivo/Archivo
         mov    BX, fid              ;extraemo el  handle del archivo (identificador)
         mov    cx, 8000             ;numero de datos a escribir
-        lea    dx, buffer         
+        mov    dx, offset buffer        
         int    21H               
         JNC    sal_escribirarchivo
         jmp error_manejo                ;para saver si hay algun tipo de error al momento de guardar el archivo
@@ -258,7 +258,7 @@ entrada_del_usuarios:
 ;donde ah=00 para leer la pulsacion del teclado y retorna los valores es 
 ;ah= scan-code de la tecla pulsada 
 ;al = caracter ascii de la tecla pulsada
-        mov    ah, 10H            ;esperamos los datos de entrada
+        mov    ah, 10H                  ;esperamos los datos de entrada
         int    16H                      ;Obtener el estado del buffer del teclado
         cmp    ah, 01H              ;y saber si es un esc scan_code de la tecla pulsada
         je     sal_en               ;si es esc salimos de la lectura de datos den entrada
@@ -407,7 +407,7 @@ de:     mov    al, [si]           ; movemos o desplazamos el caracter para impri
         inc    si
         call   escribir_caracter    ;imprimirmos el caracter
         cmp    posy, limite_derecho         ;revisamos si estamos en el limite derecho
-        JB     de                       ;JB Si está por debajo CF=1
+        jb     de                       ;JB Si está por debajo CF=1
 	;ultimo caracter
         call   cursor
         mov    BX, locacion         ;nuevamente volvemos a obtener la locacion
@@ -428,7 +428,7 @@ pa_arriba:
         cmp    posx, 00
         je     salida_tra           ; no detenemos antes de llegar al menu
         cmp    posx, limite_superior        ;estamos en el limitesuperior?
-        JBE    scroll_bajo
+        jbe    scroll_bajo
         dec    posx                ; decrementamos la posicion de lo contrario
 ;Desplácese hacia abajo una posx cuando alcance el límite superior
 scroll_bajo:   cmp    Ltop, 01
@@ -537,8 +537,6 @@ ins_fin:
 comprobar_caracter:
         cmp    al,0dh            ;si es entero  ;codigo exadecimal para enter
         je     Ent
-        cmp    posx,00
-        je     no_es_caracter
         cmp    al,08H            ;hacia atras
         je     retroceso
         cmp    al,09H            ;tecla tabulador
@@ -569,12 +567,26 @@ repeatSpace:
         loop   repeatSpace
         ret
 
-insertar_activo:  call    insertar_archivo            ;Insert
+insertar_activo:  
+        call    insertar_archivo            ;Insert
         ret
 
-Ent:    call    pulso_f1
+Ent:    ;call    insertar_archivo
+        call    toENTER
         ret
-
+toENTER:
+        call restablecer_posicion_inicial2
+        ;call para_abajo
+        ret
+restablecer_posicion_inicial2:
+                push dx
+                inc cant_enter
+                mov dh,cant_enter 
+                mov posy,01
+                mov posx,dh
+                
+                pop dx 
+ret
 ;lo que ocurre cuando presionamor eter
 pulso_f1:
         mov    ax, 0600H          ;posicionar scroll y limpiar
@@ -617,7 +629,7 @@ insertar_archivo:
         lea    si, buffer+7998  ;seteamos los contadores en las ultimas posiciones del bufer
         lea    DI, buffer+7999
 insertar_car:     mov    dh, [si]
-        mov    [DI], dh
+        mov    [di], dh
         dec    si
         dec    DI
         dec    cx
