@@ -19,12 +19,12 @@ extrn spc:near
 ;MOV dx,184FH br INT 10H
 .DATA
 ;db reserva memimoria para datos de tipo byte
-    posx        DB     00               ;posicion en la que nos encontramos
-    posy        DB     00               ;posicion en la que nos medimos
-    Ltop        DB     00               ;medida en la que estamos
-    InKey       DB     00               ;estado de la tecla de insercion para conocer si esta activa
-    locacion    DW     0                ;saber en que columa estamos
-        cant_enter DB 02
+        posx        DB     00               ;posicion en la que nos encontramos
+        posy        DB     00               ;posicion en la que nos medimos
+        Ltop        DB     00               ;medida en la que estamos
+        InKey       DB     00               ;estado de la tecla de insercion para conocer si esta activa
+        locacion    DW     0                ;saber en que columa estamos
+        cant_enter  DB     00
 ;directiva EQU lo que hace es que asigna al valor simbolico de una expresion. 
 ;Cuando encuentre el codigo dicho nombre simbolico. lo sustituira por el valor de la expresion
 ;en este caso una contante numerica que nos indica el valor de los limites de la pantalla 
@@ -33,17 +33,19 @@ extrn spc:near
     limite_derecho    EQU    79
     limite_izquierdo    EQU    00
     limite_inferior    EQU    21
-    limite_superior    EQU    02
+    limite_superior    EQU    00
     limite_pantalla   EQU    79
 
-    buffer      DB     8000 DUP(20H), 20H ; Buffer para contenido maximo de 8000 caracteres
+    buffer    DB  8000 DUP(20h),20h ; Buffer para contenido maximo de 8000 caracteres
     LIST      LABEL  BYTE                       ;
     MAX_L     DB     21
     LEN       DB     ?
     nombre_archivo   DB     23 DUP(' ')  ; Buffer for crear_archivo2 name
-    fid   DW     ?
-    archivo_temo       DB     'temp.txt',0 ;el archivo temporal nos ayuda mientras le pone un nombre al archivo
+    fid              DW     ?
+    archivo_temo     DB     'temp.txt',0 ;el archivo temporal nos ayuda mientras le pone un nombre al archivo
     ;color db 71H    ;color del fondo
+    numero_archivos db 0
+
 
 .CODE
 main:
@@ -59,7 +61,7 @@ main:
         call   crear_archivo        ;creamos un nuevo archivo
 
         mov    posy, 0		      ; posicionamos el cursos para que pueda empezar a escribir
-        mov    posx, 2		      
+        mov    posx, 0		      
 
 cic_main:
         call   tipo_captura                ;comprobamos si esta activo el bloq mayus 
@@ -90,6 +92,8 @@ cic1_tipo_captura:
         loop   cic1_tipo_captura            ; loop to clean Caps Lock information
         jmp    num
 cap_encendidas: print"Caps"
+
+
 num:    mov    posy, 70            ; posyumn locacion del cursor
         call   cursor_posicion     ;mover el cursor para mostrar la información de Bloq Num 
 ;ah para interrupcion 16h para el scan-code de las teclas
@@ -106,7 +110,6 @@ num_apagado:int    21H
         loop   num_apagado             ; loop to clean Num Lock information
         jmp    sal_tipo_captura
 num_encendido:  print "Num"
-        int    21H
 
 sal_tipo_captura:
         pop    dx                 ; restauramos la posicion x y y
@@ -119,6 +122,7 @@ sal_tipo_captura:
 error_manejo:   call reto
                 mov dx,ax
                 call des4
+                ret
 ;creamos el archivo temporal
 crear_archivo:
         mov    ah, 3CH
@@ -130,16 +134,19 @@ crear_archivo:
         ret
 
 ;nos permite crear un archivo nuevo
+;revisado
 crear_archivo2:   
         push   cx
         push   ax
+        cmp numero_archivos,05
+        jae sal_archivo
         clc                                     ;bandera de acarreo limpiar
         mov    posx, 24
         mov    posy, 9
         call   cursor_posicion                  ; move cursor location for input crear_archivo2 name
         call   extraer_nombre_archivo           ; llamamos a llamar el nombre
         pop    ax
-        ;mov    al, 02
+        mov    al, 0
         mov    cx, 00                           ; abrimos el arhivo en normal
         lea    dx, nombre_archivo            ; nombre del archivo 
         int    21H
@@ -150,11 +157,11 @@ error_archivo:
         mov    posx, 24
         mov    posy, 9
         call   cursor_posicion                  ;locacion del sursor para imprimir el mismo eh imprimir el mensaje de error
-        mov    dx,ax                        ; 
-        call des4                            ;desplegamos el mendaje de error
+        mov     dx,ax                        ; 
+        call    des4                            ;desplegamos el mendaje de error
 sal_archivo:
         ;restablecemos el cursor
-        mov    posx, 02
+        mov    posx, 00
         mov    posy, 00
         call   cursor_posicion              ; move cursor location
         pop    cx
@@ -163,10 +170,10 @@ sal_archivo:
 ;salvamos la escritura del archivo
 escribir_archivo:
         CLC                             ;limpiar bandera de acarreo
-        mov    ah, 40H              ;Escritura en dispositivo/Archivo
-        mov    BX, fid              ;extraemo el  handle del archivo (identificador)
-        mov    cx, 8000             ;numero de datos a escribir
-        mov    dx, offset buffer        
+        mov    ah,40H              ;Escritura en dispositivo/Archivo
+        mov    BX,fid              ;extraemo el  handle del archivo (identificador)
+        mov    cx,8000             ;numero de datos a escribir
+        lea    dx,buffer
         int    21H               
         JNC    sal_escribirarchivo
         jmp error_manejo                ;para saver si hay algun tipo de error al momento de guardar el archivo
@@ -236,7 +243,7 @@ Menu:
 ;
         call   cursor_posicion
         mov    ah, 02H
-        mov    posx, 1
+        mov    posx, 22
         call   cursor_posicion
         print "F1=Crear "
         print "F2=Mostrar "
@@ -250,7 +257,7 @@ Menu:
         call   cursor_posicion
         mov    ah, 02H
         print "nombre:"         ;conocer el nombre del archivo en el que estamos
-        mov    posx, 2          ;regresamos a la posicion donde podemos insertar
+        mov    posx, 0          ;regresamos a la posicion donde podemos insertar
         ret
 
 entrada_del_usuarios:
@@ -335,7 +342,7 @@ salida_entrada_usuarios:       ret              ;cuando no ah apretado esc
 
 ;restablecemos la posicion inicial
 restablecer_posicion_inicial:
-        mov    posy, 02            ; pos 00
+        mov    posy, 00            ; pos 00
         ret
 
 	; funcion de tecla hacia arriba
@@ -348,7 +355,7 @@ cic_subir:   call   pa_arriba               ; Up
 
 ;funcion que nos permitte bajar la pagina
 bajar_pagina:
-        mov cx, 19                   ;mover  19 veces hacia abajo
+                mov cx, 19                   ;mover  19 veces hacia abajo
 cic_bajar: call   para_abajo               ;bajar
         call   cursor_posicion          ; move cursor location
         loop   cic_bajar
@@ -360,11 +367,11 @@ esc_escribir:
         mov    posy, 00
         cmp    posx, 00                 ;si las posiciones son esas salimos del modo menu
         jne    reestablecer_esc         ;restablecemos cuando sea la segunda entrada
-        mov    posx, 02            ;Espacio del editor
+        mov    posx, 00            ;Espacio del editor
         jmp sal_esc
 reestablecer_esc:   
         mov    posx, 00            ;posicion para el menu
-        mov    posy, 2
+        mov    posy, 00
 sal_esc: ret
 
 
@@ -376,8 +383,6 @@ limite_y:
 ;segun dependiendo de que accion estemos realizando
 ;ponernos en la direccion adecuada del mismo
 para_abajo:
-        cmp    posx, 00              ;si es 00 significa que no es necesario
-        je     sal_abajo             ; saltamos si es una accion dentro del menu
         cmp    posx, limite_inferior        ; limite de x 
         JAE    scroll_arriba
         inc    posx                ; siguiente posicion de x
@@ -398,7 +403,7 @@ linea_desplazamiento:
         mov    dh, posx            ;salvamos las posiciones del curo
         mov    dl, posy
         push   dx
-        mov    posy, 0
+        mov    posy,00
         call   cursor                ; juzgar la ubicación del cursor
         call   cursor_posicion        ;movemos en donde se encuentra el cursor
         mov    BX, locacion         ;locacion del cursor la movemos a bx
@@ -425,13 +430,11 @@ de:     mov    al, [si]           ; movemos o desplazamos el caracter para impri
         pop    cx
         jmp salida_tra
 pa_arriba:
-        cmp    posx, 00
-        je     salida_tra           ; no detenemos antes de llegar al menu
         cmp    posx, limite_superior        ;estamos en el limitesuperior?
         jbe    scroll_bajo
         dec    posx                ; decrementamos la posicion de lo contrario
 ;Desplácese hacia abajo una posx cuando alcance el límite superior
-scroll_bajo:   cmp    Ltop, 01
+scroll_bajo:   cmp    Ltop, 00
         JB     salida_tra
         mov    ax, 0701H        
         call   limpiar_pantalla             ; int 10H,07H - scroll down
@@ -470,6 +473,7 @@ arriba:
         call   pa_arriba
         ret
 ;tecla borrar
+;revisado
 borrar_caracter:
         mov    BH, posy             ;obtenmos las posiciones 
         mov    BL, posx
@@ -502,6 +506,7 @@ borrar_c: mov    al, [si]
         ret
 
 ;presion
+;revisado
 tecla_insertar:
         mov    dh, posy
         mov    dl, posx
@@ -534,6 +539,7 @@ ins_fin:
         ret
 
 ;comprobar que los datos de entrada son un caracter
+;
 comprobar_caracter:
         cmp    al,0dh            ;si es entero  ;codigo exadecimal para enter
         je     Ent
@@ -575,37 +581,27 @@ Ent:    ;call    insertar_archivo
         call    toENTER
         ret
 toENTER:
-        call restablecer_posicion_inicial2
-        ;call para_abajo
+        call restablecer_posicion_inicial
+        call para_abajo
         ret
-restablecer_posicion_inicial2:
-                push dx
-                inc cant_enter
-                mov dh,cant_enter 
-                mov posy,01
-                mov posx,dh
-                
-                pop dx 
-ret
+
 ;lo que ocurre cuando presionamor eter
 pulso_f1:
         mov    ax, 0600H          ;posicionar scroll y limpiar
         call   limpiar_pantalla   
         mov    ah, 3CH            ;funcion para crear el arhivo
-        mov al,00
         call   crear_archivo2               ; crear nuevo archivo
         call restablecer_posicion_inicial
         call para_abajo
         ret
 ;abrir archivo
 pulso_f2:
-        mov    ax, 0600H          ;posicionamos el scroll y lo limiamos
-        call   limpiar_pantalla   ; Scroll
-        mov    ah,3dh            ;abrimos el archivo solo en modo apartura
-        mov al,02
-        call   crear_archivo2     ;abrimos o creamos un archivo
-        call   leer               ;leemos el contenido de este
-        call   restablecer_posicion_inicial
+        mov     ax, 0600H          ;posicionamos el scroll y lo limiamos
+        call    limpiar_pantalla   ; Scroll
+        mov     ah,3dh            ;abrimos el archivo solo en modo apartura
+        call    crear_archivo2     ;abrimos o creamos un archivo
+        call    leer               ;leemos el contenido de este
+        call    restablecer_posicion_inicial
         call    para_abajo
         ret
 ;Guuardar el contenido
@@ -628,7 +624,7 @@ insertar_archivo:
         mov    cx, 8000
         lea    si, buffer+7998  ;seteamos los contadores en las ultimas posiciones del bufer
         lea    DI, buffer+7999
-insertar_car:     mov    dh, [si]
+insertar_car:mov    dh, [si]
         mov    [di], dh
         dec    si
         dec    DI
@@ -683,6 +679,7 @@ salvar:
         ret
 
 ;ubicacion actual del cursor
+;revisado
 cursor:
         push   cx                       ;respaldamos ambos registros
         push   dx
@@ -692,7 +689,7 @@ cursor:
         dec    cx
         movZX  dx, Ltop           ;movzx es para tranferir un dato agregando ceros
         ADD    cx, dx             ;agregamos lo que tenemos en Ltop ah cx 
-        cmp    cx, 01             ;estamos en la posicion 1
+        cmp    cx, 00             ;estamos en la posicion 1
         jb     agregar_posy
       
 ;agrgamos posiciones en las x para asi poder la manipulasion
@@ -718,13 +715,14 @@ escribir_caracter:
         mov    bl, 07H            ; atributo de fondo blanco sobre azul
         mov    cx, 1
         int    10H                ; int 10H,09H - escribir el caracter en la locacion designada usando la interrupcion 10h
-        call   mover_derecha                ; mover a la derecha para ir a la siguiente posicion
+ok:     call   mover_derecha                ; mover a la derecha para ir a la siguiente posicion
         call   cursor_posicion              ; move cursor a la posicion
         pop    cx
         pop    ax
         ret
 
 ;mever el cursor a la locacion
+;revisado
 cursor_posicion:
         ;asigna la posicion del cursor 
         ;donde: ah,02h modo, bh es la pagina, dh= fila, dl=columna

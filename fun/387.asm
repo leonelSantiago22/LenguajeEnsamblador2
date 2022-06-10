@@ -12,7 +12,7 @@
     ;DatoFlo dd 13.99 ;Flotante de 32 bits.
     df_entero  dd ?
     df_diez   dd 10
-    df_medio   dd 0.49999
+    df_medio   dd 0.499999
         lf_divisor         dd 10.0
         lf_diez            dd 10.0
         lf_tecla           dd 0
@@ -44,7 +44,7 @@ pusha
         fild df_entero ;pila: entero dato dato xxx xxx
         fsub        ;pila: dato-entero dato xxx xxx
         ;reptir 4 veces
-        mov cx,8
+        mov cx,4
 
 df_cic: fild df_diez   ;pila: 10.0 dato-entero dato xxx xxx
         fmul        ;pila: 10*(dato-entero) dato xxx xxx
