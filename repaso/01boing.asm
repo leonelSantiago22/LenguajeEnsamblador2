@@ -7,7 +7,8 @@
 main:   mov ax,@data
         mov ds,ax 
         mov es,ax 
-
+        mov cx,4 
+cero:   push cx 
         mov cx,13
         mov dx, offset cadena
         add dx,14
@@ -28,6 +29,8 @@ ciclo2: int 21h
         call retardo
         call retardo
         loop ciclo2
+        pop cx 
+        loop cero
         .exit 0
 
 
