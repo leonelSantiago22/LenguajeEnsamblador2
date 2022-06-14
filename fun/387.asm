@@ -11,10 +11,10 @@
 .data
     ;DatoFlo dd 13.99 ;Flotante de 32 bits.
     df_entero  dd ?
-    df_diez   dd 10
-    df_medio   dd 0.499999
-        lf_divisor         dd 10.0
-        lf_diez            dd 10.0
+    df_diez   dd 8
+    df_medio   dd 0.4999999
+        lf_divisor         dd 8.0
+        lf_diez            dd 8.0
         lf_tecla           dd 0
 .code
 ;Recibir el dato por la pila

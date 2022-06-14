@@ -10,7 +10,9 @@ ini:	mov ah,01h
 		mov dl,al
 		mov ah,02h
 		int 21h
+		cmp al,20h
+		je sal
 		cmp al,71h
 		jne ini
-		.exit 0
+sal:	.exit 0
 end
